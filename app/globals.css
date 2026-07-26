@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Knock Nation Bag — design tokens
+   Single source of truth: docs/design.md
+   Tailwind v4 is CSS-first: this @theme block replaces tailwind.config.js.
+   Never hard-code a design value in a component. Add it here first.
+--------------------------------------------------------------------------- */
+
+@theme inline {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "Cascadia Code", monospace;
+}
+
+@theme {
+  /* -- Colour (design.md §3) ---------------------------------------------- */
+  --color-ink: #111827;
+  --color-gold: #d4af37;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+  --color-body: #475569;
+  --color-muted: #94a3b8;
+  --color-verified-bg: #d1fae5;
+  --color-verified-fg: #065f46;
+  --color-footer-chip: #1e293b;
+  --color-danger: #b91c1c;
+
+  /* -- Radius (design.md §8) ---------------------------------------------- */
+  --radius-badge: 6px;
+  --radius-media: 12px;
+  --radius-card: 14px;
+  --radius-hero: 16px;
+
+  /* -- Type scale (design.md §4.2 / §4.3) ---------------------------------
+     Suffixed tokens are the tablet (-md) and desktop (-xl) steps.
+     Usage: text-display md:text-display-md xl:text-display-xl              */
+
+  --text-display: 32px;
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 800;
+  --text-display-md: 56px;
+  --text-display-md--line-height: 1.25;
+  /* 73px verified by measuring rendered glyph width against the reference
+     (613px for "Carry Confidence."). Cap-height alone suggested 75px —
+     Outfit's cap ratio is ~0.727, not the 0.70 assumed during analysis. */
+  --text-display-xl: 73px;
+  --text-display-xl--line-height: 99px;
+
+  --text-h2: 24px;
+  --text-h2--line-height: 1.2;
+  --text-h2-md: 34px;
+  --text-h2-md--line-height: 1.15;
+  --text-h2-xl: 42px;
+  --text-h2-xl--line-height: 1.15;
+
+  /* Newsletter heading — no eyebrow above it, so one step down */
+  --text-h2-plain: 24px;
+  --text-h2-plain--line-height: 1.2;
+  --text-h2-plain-md: 30px;
+  --text-h2-plain-md--line-height: 1.2;
+  --text-h2-plain-xl: 36px;
+  --text-h2-plain-xl--line-height: 1.2;
+
+  --text-banner: 24px;
+  --text-banner--line-height: 1.25;
+  --text-banner-md: 36px;
+  --text-banner-md--line-height: 1.2;
+  --text-banner-xl: 48px;
+  --text-banner-xl--line-height: 1.15;
+
+  --text-eyebrow: 12px;
+  --text-eyebrow--line-height: 18px;
+  --text-eyebrow--letter-spacing: 0.12em;
+
+  --text-lead: 16px;
+  --text-lead--line-height: 26px;
+  --text-lead-md: 17px;
+  --text-lead-md--line-height: 28px;
+  --text-lead-xl: 18px;
+  --text-lead-xl--line-height: 30px;
+
+  --text-card-title: 16px;
+  --text-card-title--line-height: 1.2;
+  --text-card-title-md: 17px;
+  --text-card-title-md--line-height: 1.2;
+  --text-card-title-xl: 18px;
+  --text-card-title-xl--line-height: 1.2;
+
+  --text-card-price: 20px;
+  --text-card-price--line-height: 1.1;
+  --text-card-price-md: 22px;
+  --text-card-price-md--line-height: 1.1;
+  --text-card-price-xl: 24px;
+  --text-card-price-xl--line-height: 1.1;
+
+  --text-nav: 15px;
+  --text-nav--line-height: 1;
+
+  --text-btn: 16px;
+  --text-btn--line-height: 1;
+  --text-btn-sm: 14px;
+  --text-btn-sm--line-height: 1;
+
+  --text-micro: 11px;
+  --text-micro--line-height: 1.2;
+  --text-micro--letter-spacing: 0.1em;
+
+  --text-footer-heading: 16px;
+  --text-footer-heading--line-height: 1.2;
+  --text-footer-link: 15px;
+  --text-footer-link--line-height: 28px;
+
+  /* -- Motion (design.md §13) --------------------------------------------- */
+  --ease-out-soft: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-body);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* design.md §4.4 — balance headings, tidy paragraph rags */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* accessibility.md §3 — focus is never invisible */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion — accessibility.md §7. Safety net, not a substitute for
+   writing motion-aware components.
+--------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
