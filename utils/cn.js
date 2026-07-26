@@ -23,6 +23,9 @@ const FONT_SIZES = [
   'card-price', 'card-price-md', 'card-price-xl',
   'nav', 'btn', 'btn-sm', 'micro',
   'footer-heading', 'footer-link',
+  // admin dashboard scale
+  'admin-xs', 'admin-sm', 'admin', 'admin-md', 'admin-lg',
+  'admin-title', 'admin-h1', 'admin-stat',
 ]
 
 const twMerge = extendTailwindMerge({

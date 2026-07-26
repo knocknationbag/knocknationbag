@@ -15,6 +15,7 @@
 | Icons | **`lucide-react`** | `^1.27.0` | Yes |
 | Class merging | `clsx` + `tailwind-merge` via `utils/cn.js` | `^2.1.1` / `^3.6.0` | Yes |
 | Linting | ESLint 9 flat config + `eslint-config-next` | `^9` | Yes |
+| Backend | **Supabase** (`@supabase/supabase-js` + `@supabase/ssr`) | `^2.110` / `^0.12` | Yes |
 | Fonts | `next/font/google` — Outfit + Geist Mono | — | Yes |
 | Images | `next/image` | — | Yes |
 | State (later) | Zustand for client state · TanStack Query for server state | — | Provisional |
@@ -40,19 +41,25 @@ is computed at runtime, e.g. a progress width).
 ```
 knbagwebsite/
 ├── app/                          # App Router — routes only
-│   ├── layout.jsx                # Root layout: fonts, <Header>, <Footer>, <MobileNav>, metadata
-│   ├── page.jsx                  # Home landing page — composes home/ sections
+│   ├── layout.jsx                # Root: <html>, fonts, sitewide JSON-LD. No chrome.
 │   ├── globals.css               # Tailwind directives + @theme tokens + reduced-motion. Nothing else.
 │   ├── not-found.jsx
-│   ├── error.jsx
-│   └── (shop)/                   # Route group — no URL segment. Future commerce routes.
+│   ├── sitemap.js  robots.js     # Metadata routes
+│   ├── (site)/                   # Storefront group — Header/Footer/MobileNav chrome
+│   │   ├── layout.jsx
+│   │   ├── page.jsx              #   Home landing page — composes home/ sections
+│   │   └── …                     #   27 public routes. Route groups do not change URLs.
+│   └── (admin)/admin/            # Dashboard group — AdminShell chrome. See admin.md
+│       ├── layout.jsx
+│       └── …                     #   22 modules
 │
 ├── components/
 │   ├── common/                   # Reused in 3+ places, page-agnostic
-│   ├── layout/                   # Page chrome: Header, Footer, Container, Section, MobileNav
+│   ├── layout/                   # Storefront chrome: Header, Footer, Container, Section, MobileNav
 │   ├── home/                     # Homepage sections only. One file per section.
 │   ├── product/                  # Commerce primitives: ProductCard, Rating, PriceTag, WishlistButton
-│   └── ui/                       # Unstyled/low-level primitives: Button, Badge, Input, Skeleton
+│   ├── ui/                       # Unstyled/low-level primitives: Button, Badge, Input, Skeleton
+│   └── admin/                    # Dashboard only — layout/, ui/, modules/, seo/. See admin.md
 │
 ├── constants/                    # Frozen values that never change at runtime
 │   ├── navigation.js             # Header nav, footer columns, mobile bottom-nav items
@@ -68,6 +75,14 @@ knbagwebsite/
 │
 ├── hooks/                        # Client-only React hooks. Each file exports one hook.
 ├── lib/                          # External-facing integrations (api client, cms, analytics)
+│   └── supabase/                 # Supabase clients — see supabase.md
+│       ├── env.js                #   the only file that reads process.env for Supabase
+│       ├── client.js             #   Client Components
+│       ├── server.js             #   Server Components / Actions / Route Handlers
+│       ├── admin.js              #   service role, bypasses RLS. `server-only`
+│       └── middleware.js         #   session refresh, consumed by proxy.js
+├── proxy.js                      # Next 16 renamed `middleware` -> `proxy`. Refreshes Supabase session.
+├── .env.local.example            # Committed placeholder template (see .gitignore exception)
 ├── utils/                        # Pure functions. No React, no side effects, no imports from components/
 │   └── cn.js                     # clsx + tailwind-merge helper
 ├── public/                       # Static assets — see assets.md

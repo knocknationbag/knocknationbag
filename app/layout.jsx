@@ -1,8 +1,5 @@
 import { Outfit, Geist_Mono } from 'next/font/google'
 
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import MobileNav from '@/components/layout/MobileNav'
 import JsonLd from '@/components/common/JsonLd'
 import { site, socialLinks } from '@/constants/site'
 
@@ -88,21 +85,12 @@ export default function RootLayout({ children }) {
       <body>
         <JsonLd data={organizationLd} />
 
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100]
-                     focus:rounded-full focus:bg-ink focus:px-6 focus:py-3 focus:text-btn
-                     focus:font-semibold focus:text-white"
-        >
-          Skip to content
-        </a>
-
-        <Header />
-
-        <main id="main">{children}</main>
-
-        <Footer />
-        <MobileNav />
+        {/*
+          Chrome lives in the route-group layouts, not here: app/(site) renders
+          the storefront header/footer, app/(admin) renders the dashboard shell.
+          The root layout owns only <html>, fonts and sitewide structured data.
+        */}
+        {children}
       </body>
     </html>
   )

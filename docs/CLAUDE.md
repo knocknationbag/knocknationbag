@@ -43,6 +43,8 @@ is computed at runtime) · any second icon library · any CSS-in-JS.
 | [responsive.md](./responsive.md) | Anything breakpoint-related |
 | [accessibility.md](./accessibility.md) | Every PR. Non-negotiable |
 | [seo.md](./seo.md) | Adding a route or metadata |
+| [supabase.md](./supabase.md) | Any Supabase work — which client to use, env vars, cookies, the proxy |
+| [admin.md](./admin.md) | Admin dashboard — shell, UI kit, SEO system, auth, adding a module |
 | [roadmap.md](./roadmap.md) | Understanding where a feature belongs |
 
 ---
@@ -438,17 +440,29 @@ submissions, revalidation hooks. Never as a proxy to fetch your own data from a 
 
 ---
 
-## 19. How To: Integrate Authentication Later
+## 19. Authentication
 
-1. Auth.js (NextAuth v5): `lib/auth/`, `app/api/auth/[...nextauth]/route.js`.
-2. Sessions in **httpOnly cookies**. Never `localStorage`. Never a token in client state.
-3. Protect routes in `middleware.js`, and **re-check authorisation in every Server Action and route
-   handler**. Middleware is a convenience, not a security boundary.
-4. `app/(auth)/` for login/register; `app/(account)/` for the account area, all
-   `noindex` + `dynamic = 'force-dynamic'`.
-5. `Header`'s account icon becomes a menu when a session exists — a prop change, not a rewrite.
-6. On login, merge the guest cart into the user cart server-side.
+> **Built.** Admin auth is live — see [`admin.md` §9](./admin.md#9-authentication) for the full map.
+> Supabase Auth only; never add Auth.js/NextAuth alongside it.
+
+1. **Ask permission questions through `lib/auth/permissions.js`.** Never compare a role id to a
+   string literal anywhere else.
+2. **Every Server Action and Route Handler re-checks authorisation itself** via
+   `requirePermission()`. The proxy is an optimistic gate; the `(shell)` layout is the boundary for
+   rendering; neither covers a mutation.
+3. Sessions are **httpOnly cookies** managed by `@supabase/ssr`. Never `localStorage`, never a token
+   in client state, never a JWT handled by hand.
+4. **The role lives in `app_metadata`, never `user_metadata`** — the latter is user-writable, so a
+   role there is self-service privilege escalation.
+5. **No role means no access.** Never introduce a default role as a convenience.
+6. Always `getUser()`, never `getSession()`, on the server — `getSession()` trusts the cookie
+   without verifying it.
 7. Never render user-specific content in a statically generated page.
+8. Any redirect target that came from a URL must go through `safeNextPath()`.
+
+**Storefront customer accounts are not built.** `/login`, `/register` and `/forgot-password` are
+static Phase 2 pages with no auth behind them. When they are wired up, they get their own route
+group and reuse `lib/auth/*`; the admin screens under `/admin` stay separate.
 
 ---
 

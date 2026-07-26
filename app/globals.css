@@ -112,6 +112,29 @@
   --text-footer-link: 15px;
   --text-footer-link--line-height: 28px;
 
+  /* -- Admin dashboard scale (docs/admin.md) -------------------------------
+     The storefront scale is marketing-sized (display 73px). The dashboard needs
+     SaaS density — roughly what the storefront looks like at 75% zoom — so it
+     gets its own type steps. Same families, same colours, same radii; only the
+     sizes differ. Do not use storefront text-* tokens inside app/(admin).      */
+
+  --text-admin-xs: 11px;
+  --text-admin-xs--line-height: 16px;
+  --text-admin-sm: 12px;
+  --text-admin-sm--line-height: 18px;
+  --text-admin: 13px;
+  --text-admin--line-height: 20px;
+  --text-admin-md: 14px;
+  --text-admin-md--line-height: 21px;
+  --text-admin-lg: 15px;
+  --text-admin-lg--line-height: 22px;
+  --text-admin-title: 17px;
+  --text-admin-title--line-height: 24px;
+  --text-admin-h1: 20px;
+  --text-admin-h1--line-height: 28px;
+  --text-admin-stat: 24px;
+  --text-admin-stat--line-height: 30px;
+
   /* -- Motion (design.md §13) --------------------------------------------- */
   --ease-out-soft: cubic-bezier(0.4, 0, 0.2, 1);
 }

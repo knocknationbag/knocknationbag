@@ -55,6 +55,17 @@ export function getCollection(slug) {
   return collections.find((c) => c.slug === slug) ?? null
 }
 
+/**
+ * Serialisable collection list for Client Components.
+ * `collections` entries carry a `match` predicate, and functions cannot cross
+ * the Server -> Client boundary, so admin forms consume this instead.
+ */
+export const collectionOptions = collections.map(({ slug, title, eyebrow }) => ({
+  slug,
+  title,
+  eyebrow,
+}))
+
 export function getCategory(slug) {
   return categories.find((c) => c.slug === slug) ?? null
 }

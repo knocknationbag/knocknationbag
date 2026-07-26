@@ -5,6 +5,7 @@ import Section from '@/components/layout/Section'
 import PageHeader from '@/components/common/PageHeader'
 import SectionHeader from '@/components/common/SectionHeader'
 import Banner from '@/components/common/Banner'
+import FounderSection from '@/components/about/FounderSection'
 import { aboutStats, aboutValues } from '@/data/content'
 
 export const metadata = {
@@ -76,6 +77,8 @@ export default function AboutPage() {
           ))}
         </ul>
       </Section>
+
+      <FounderSection />
 
       <Banner
         image="/images/banners/promo-crafted.webp"

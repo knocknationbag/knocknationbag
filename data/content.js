@@ -76,6 +76,32 @@ export const aboutValues = [
   },
 ]
 
+/**
+ * Founder section on the About page.
+ * Placeholder identity — swap `name` and `portrait` for the real founder.
+ * Copy is written pronoun-free so it stays accurate whoever it is replaced with.
+ */
+export const founder = {
+  eyebrow: 'OUR FOUNDER',
+  heading: 'Building Confidence Through Every Journey',
+  subheading:
+    'A bag should earn its place on your shoulder for a decade, not a season. That conviction is where Knock Nation Bag started, and it still settles every decision we make.',
+  name: 'Rafael Duarte',
+  role: 'Founder & Creative Director',
+  portrait: '/images/about/founder-portrait.webp',
+  portraitAlt:
+    'Rafael Duarte, Founder and Creative Director of Knock Nation Bag, photographed against a neutral studio backdrop',
+  quote:
+    'We are not trying to make a bag you love on the day it arrives. We are making the one you still reach for in ten years.',
+  story: [
+    'The brand began in 2019 with a repaired bag rather than a new one. A twelve-year-old leather holdall, split at the seam, that three shops declined to touch because replacing it was cheaper than mending it. That answer felt like the wrong one — and it turned out to be the whole brief.',
+    'So we started at the frame. Before a hide is chosen or a colourway approved, we settle the structure: where the load travels, how the opening behaves when the bag is half empty, which four points will take the abuse. Design that begins with the silhouette can only ever hide its weaknesses. Design that begins with the structure does not have any to hide.',
+    'That standard is easier to promise than to keep, so we made it measurable. Every piece leaves the Lisbon workshop through the same twenty-one-point check, and every piece carries a three-year warranty against anything we got wrong. After that we repair it for life at cost, because the alternative is asking someone to throw away something we told them would last.',
+    'The people who buy from us tend to buy once and then write to us years later — about a strap that needs replacing, or a trip the bag survived. Those letters shape the next season far more than any trend report. We would rather be told what failed than be flattered.',
+    'What comes next is more of the same discipline, applied wider: fewer pieces, released when they are finished rather than when the calendar says so, and a repair service that reaches every one of the forty-two countries we ship to. Growth is welcome. It is simply not the point.',
+  ],
+}
+
 export const contactChannels = [
   { label: 'Customer care', value: 'care@knocknationbag.com', href: 'mailto:care@knocknationbag.com' },
   { label: 'Press & partnerships', value: 'press@knocknationbag.com', href: 'mailto:press@knocknationbag.com' },
