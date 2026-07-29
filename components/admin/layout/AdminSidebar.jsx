@@ -56,7 +56,12 @@ export default function AdminSidebar({ open, onClose, collapsed, onToggleCollaps
         )}
       >
         <div className={cn('flex h-14 shrink-0 items-center gap-2 border-b border-white/10', collapsed ? 'xl:justify-center xl:px-0' : 'px-4')}>
-          <Logo variant="white" size={26} className={cn(collapsed && 'xl:hidden')} />
+          {/*
+            Two sizes, one asset. The 240px sidebar has room for the lockup at a
+            legible size; the 60px collapsed rail does not, so it keeps the
+            smaller one. Logo derives width from height, so neither can stretch.
+          */}
+          <Logo variant="white" size={34} className={cn(collapsed && 'xl:hidden')} />
           <Logo variant="white" size={26} href="/admin" className={cn('hidden', collapsed && 'xl:flex')} />
 
           <button

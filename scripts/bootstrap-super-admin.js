@@ -14,43 +14,16 @@
  * being valid would be worse than no output at all.
  *
  * Uses the service-role key, which bypasses Row Level Security entirely. It is
- * read from .env.local and never printed. lib/supabase/admin.js is deliberately
- * not reused: it is marked `server-only` and throws outside a Next.js runtime.
+ * read from .env.local and never printed — see service-client.js.
  */
 
 const crypto = require('node:crypto')
-const fs = require('node:fs')
-const path = require('node:path')
-const { createClient } = require('@supabase/supabase-js')
+
+const { createServiceClient, findUserByEmail, report } = require('./service-client')
 
 const EMAIL = 'knocknationbag@gmail.com'
 const ROLE = 'super-admin'
 const PASSWORD_LENGTH = 24
-
-/**
- * Minimal .env.local reader.
- *
- * Node's --env-file flag would also work, but parsing here keeps the script
- * runnable as plain `node scripts/bootstrap-super-admin.js` with no flags.
- * Comment lines never match the pattern, so they are skipped for free.
- */
-function loadEnvFile(file) {
-  const full = path.join(process.cwd(), file)
-  if (!fs.existsSync(full)) return {}
-
-  const values = {}
-  for (const line of fs.readFileSync(full, 'utf8').split(/\r?\n/)) {
-    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/)
-    if (!match) continue
-    let value = match[2].trim()
-    if (/^(".*"|'.*')$/.test(value)) value = value.slice(1, -1)
-    values[match[1]] = value
-  }
-  return values
-}
-
-const fileEnv = loadEnvFile('.env.local')
-const readEnv = (key) => (process.env[key] || '').trim() || fileEnv[key] || ''
 
 // Ambiguous glyphs (0/O, 1/l/I) are excluded — this password gets read off a
 // terminal and typed by hand at least once.
@@ -76,44 +49,13 @@ function generatePassword(length = PASSWORD_LENGTH) {
   return chars.join('')
 }
 
-/** supabase-js has no get-by-email, so page through the admin list. */
-async function findUserByEmail(supabase, email) {
-  const target = email.toLowerCase()
-  const perPage = 200
-
-  for (let page = 1; page <= 25; page += 1) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage })
-    if (error) throw new Error(`Could not list users: ${error.message}`)
-
-    const found = data.users.find((user) => (user.email || '').toLowerCase() === target)
-    if (found) return found
-    if (data.users.length < perPage) return null
-  }
-  return null
-}
-
-function report(lines) {
-  const rule = '─'.repeat(62)
-  console.log(`\n${rule}\n${lines.join('\n')}\n${rule}\n`)
-}
-
 async function main() {
-  const url = readEnv('NEXT_PUBLIC_SUPABASE_URL')
-  const serviceKey = readEnv('SUPABASE_SERVICE_ROLE_KEY')
-
-  const missing = [!url && 'NEXT_PUBLIC_SUPABASE_URL', !serviceKey && 'SUPABASE_SERVICE_ROLE_KEY'].filter(Boolean)
-  if (missing.length) {
-    throw new Error(`Missing ${missing.join(' and ')} in .env.local. See docs/supabase.md.`)
-  }
-
-  const supabase = createClient(url, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
-  })
+  const { supabase, host } = createServiceClient()
 
   const password = generatePassword()
   const attributes = { password, email_confirm: true, app_metadata: { role: ROLE } }
 
-  console.log(`Target project: ${new URL(url).host}`)
+  console.log(`Target project: ${host}`)
 
   let user = await findUserByEmail(supabase, EMAIL)
   let action

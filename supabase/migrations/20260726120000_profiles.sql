@@ -128,3 +128,23 @@ create policy "profiles: admin read"
 create policy "profiles: admin write"
   on public.profiles for all to authenticated
   using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- Table privileges
+--
+-- RLS filters the rows a role can already reach; it cannot grant reach. Without
+-- these, every policy above is unreachable and PostgREST answers "permission
+-- denied for table profiles".
+--
+-- Granted explicitly rather than left to ALTER DEFAULT PRIVILEGES: this project
+-- creates new tables with only Dxtm (truncate, references, trigger, maintain)
+-- for the API roles, so a table that relies on the default arrives unreadable.
+--
+-- anon gets nothing. There is no anonymous policy on this table, and a profile
+-- is personal data — an unauthenticated caller has no business reading it.
+-- ---------------------------------------------------------------------------
+grant select, insert, update, delete on public.profiles to authenticated;
+
+-- service_role bypasses RLS, but bypassing RLS is not the same as holding the
+-- privilege — it still needs the grant. This is the key server-side writes use.
+grant all on public.profiles to service_role;

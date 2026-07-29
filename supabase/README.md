@@ -54,3 +54,23 @@ schema, change that line to `create extension if not exists pg_trgm with schema 
 ## After applying
 
 Reload `/admin/users` — the Super Admin account should already be listed, via the backfill.
+
+## Development data
+
+```bash
+node scripts/seed-dev-data.js
+```
+
+Writes 3 users and 30 products. Idempotent — users are matched by email and products by
+slug, so re-running updates the same rows rather than adding more. It never deletes, and it
+leaves the Super Admin account alone.
+
+Re-running resets the seeded users' passwords, so the values it prints are always the ones
+that work. They are development credentials for accounts on `example.com`, a domain that
+cannot receive mail.
+
+The dataset is `scripts/seed-fixtures.js`. Nothing in `app/` or `components/` imports it —
+the dashboard reads these rows through `lib/db/*` like any other data.
+
+Run it only after the migrations above. Without them it stops before writing anything and
+tells you which table it could not reach.

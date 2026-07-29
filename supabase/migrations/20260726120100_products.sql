@@ -119,3 +119,18 @@ create policy "products: admin read"
 create policy "products: admin write"
   on public.products for all to authenticated
   using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- Table privileges
+--
+-- See the same section in the profiles migration for why these are explicit:
+-- RLS filters rows, it does not grant access, and this project's default
+-- privileges do not give the API roles SELECT.
+--
+-- anon gets SELECT and nothing else. That is what the storefront needs, and the
+-- "public read published" policy above narrows it to Published rows — so an
+-- anonymous reader can never see a draft.
+-- ---------------------------------------------------------------------------
+grant select on public.products to anon;
+grant select, insert, update, delete on public.products to authenticated;
+grant all on public.products to service_role;
