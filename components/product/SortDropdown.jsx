@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { SORT_OPTIONS } from '@/data/catalog'
+import { SORT_OPTIONS } from '@/constants/catalog'
 import { buildQuery } from '@/utils/catalog'
 import { cn } from '@/utils/cn'
 

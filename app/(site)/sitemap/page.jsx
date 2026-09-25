@@ -2,9 +2,8 @@ import Link from 'next/link'
 
 import Container from '@/components/layout/Container'
 import PageHeader from '@/components/common/PageHeader'
-import { categories } from '@/data/categories'
-import { collections } from '@/data/catalog'
-import { products } from '@/data/products'
+import { getCatalog } from '@/lib/catalog'
+import { COLLECTIONS } from '@/constants/catalog'
 import { footerColumns } from '@/constants/navigation'
 
 export const metadata = {
@@ -34,7 +33,9 @@ function LinkGroup({ heading, links }) {
   )
 }
 
-export default function SitemapPage() {
+export default async function SitemapPage() {
+  const { products, categories } = await getCatalog()
+
   return (
     <>
       <PageHeader
@@ -64,14 +65,13 @@ export default function SitemapPage() {
 
           <LinkGroup
             heading="Collections"
-            links={collections.map((c) => ({ label: c.title, href: `/collections/${c.slug}` }))}
+            links={COLLECTIONS.map((c) => ({ label: c.title, href: `/collections/${c.slug}` }))}
           />
 
           <LinkGroup
             heading="Your account"
             links={[
               { label: 'My account', href: '/account' },
-              { label: 'Wishlist', href: '/wishlist' },
               { label: 'Cart', href: '/cart' },
               { label: 'Checkout', href: '/checkout' },
               { label: 'Sign in', href: '/login' },

@@ -1,59 +1,73 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import PageHeader from '@/components/common/PageHeader'
 import ProductListing from '@/components/product/ProductListing'
-import { getProductsByCategory } from '@/data/products'
-import { categories } from '@/data/categories'
-import { getCategory } from '@/data/catalog'
+import { getCatalog, getCategoryBySlug, getProductsInCategory, PLACEHOLDER_IMAGE } from '@/lib/catalog'
 
-const COPY = {
-  men: 'Structured carry for work and weekend — messengers, holdalls and packs cut for a longer torso.',
-  women: 'Totes, crossbodies and top-handles in hand-finished leather, built to hold their shape.',
-  travel: 'Cabin-sized luggage, clamshell packs and weekenders engineered for repeat transits.',
-  laptop: 'Suspended sleeves and side-entry access for machines from 13 to 16 inches.',
-  office: 'Briefcases and satchels that keep documents flat and open in one motion.',
-  backpack: 'Roll-tops, daypacks and commuters in waxed canvas and recycled technical weaves.',
-  school: 'Lightweight campus packs with reinforced bases rated for a full textbook load.',
-  accessories: 'Folios, organisers and compact pieces that finish a carry system.',
-}
-
-export function generateStaticParams() {
+/** Pre-render every active category; new ones render on first visit. */
+export async function generateStaticParams() {
+  const { categories } = await getCatalog()
   return categories.map((category) => ({ slug: category.slug }))
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params
-  const category = getCategory(slug)
+  const category = await getCategoryBySlug(slug)
   if (!category) return {}
 
+  const title = category.seo.title || `${category.title}`
+  const description = category.seo.description || `Shop ${category.title.toLowerCase()} from Knock Nation Bag.`
+  const image = category.seo.ogImage || (category.image !== PLACEHOLDER_IMAGE ? category.image : null)
+
   return {
-    title: `${category.title} Bags`,
-    description: COPY[slug] ?? `Shop ${category.title} bags from Knock Nation Bag.`,
+    title,
+    description,
     alternates: { canonical: `/category/${slug}` },
     openGraph: {
-      title: `${category.title} Bags | Knock Nation Bag`,
+      title: `${title} | Knock Nation Bag`,
+      description,
       url: `/category/${slug}`,
-      images: [{ url: category.image }],
+      ...(image ? { images: [{ url: image }] } : {}),
     },
   }
 }
 
 export default async function CategoryPage({ params, searchParams }) {
-  const { slug } = await params
-  const query = await searchParams
-  const category = getCategory(slug)
+  const [{ slug }, query] = await Promise.all([params, searchParams])
+  const category = await getCategoryBySlug(slug)
   if (!category) notFound()
 
-  const items = getProductsByCategory(slug)
+  const items = await getProductsInCategory(category)
+  const crumbs = [
+    { label: 'Shop', href: '/shop' },
+    ...(category.parent ? [{ label: category.parent.title, href: `/category/${category.parent.slug}` }] : []),
+    { label: category.title },
+  ]
 
   return (
     <>
       <PageHeader
-        eyebrow="ARCHITECTURAL CURATION"
-        title={`${category.title} Bags`}
-        description={COPY[slug]}
-        breadcrumbs={[{ label: 'Shop', href: '/shop' }, { label: category.title }]}
-      />
+        eyebrow={category.parent ? category.parent.title.toUpperCase() : 'SHOP BY CATEGORY'}
+        title={category.title}
+        description={category.description || `${items.length} product${items.length === 1 ? '' : 's'} in ${category.title}.`}
+        breadcrumbs={crumbs}
+      >
+        {category.children.length ? (
+          <ul className="mt-6 flex flex-wrap gap-2" aria-label={`${category.title} subcategories`}>
+            {category.children.map((child) => (
+              <li key={child.id}>
+                <Link
+                  href={`/category/${child.slug}`}
+                  className="inline-block rounded-full border border-border bg-surface px-4 py-2 text-[14px] text-ink transition-colors hover:border-border-hover hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                >
+                  {child.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </PageHeader>
       <ProductListing products={items} params={query} basePath={`/category/${slug}`} />
     </>
   )

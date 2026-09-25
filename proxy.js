@@ -13,6 +13,12 @@ import {
   safeNextPath,
   NEXT_PARAM,
 } from '@/lib/auth/routes'
+import {
+  customerLoginUrlFor,
+  isCustomerGuestOnlyPath,
+  isCustomerProtectedPath,
+  safeCustomerNextPath,
+} from '@/lib/auth/customerRoutes'
 
 /**
  * Next.js 16 renamed the `middleware` file convention to `proxy` — the
@@ -22,7 +28,8 @@ import {
  * Two jobs:
  *   1. Refresh the Supabase session on every matched request (mandatory — see
  *      lib/supabase/middleware.js).
- *   2. Keep guests out of /admin and signed-in users off the login screen.
+ *   2. Keep guests out of /admin and /account, and signed-in users off the
+ *      login screens (admin and storefront each have their own).
  *
  * Job 2 is an *optimistic* gate, exactly as the Next.js docs intend. It runs
  * before rendering and gives a fast, clean redirect, but it is not the security
@@ -33,10 +40,21 @@ export async function proxy(request) {
   const { response, user, configured } = await updateSession(request)
   const { pathname, search } = request.nextUrl
 
-  if (!isAdminPath(pathname)) return response
-
   const redirectTo = (path) =>
     withSessionCookies(NextResponse.redirect(new URL(path, request.url)), response)
+
+  // Storefront accounts. Same optimistic-gate rules as below: /account
+  // re-verifies the session itself, this only makes the redirect fast.
+  if (!isAdminPath(pathname)) {
+    if (!configured) return response
+    if (isCustomerGuestOnlyPath(pathname) && user) {
+      return redirectTo(safeCustomerNextPath(request.nextUrl.searchParams.get(NEXT_PARAM)))
+    }
+    if (isCustomerProtectedPath(pathname) && !user) {
+      return redirectTo(customerLoginUrlFor(pathname, search))
+    }
+    return response
+  }
 
   // Supabase not wired up yet.
   //

@@ -320,6 +320,44 @@ assigned — deliberately, since the alternative is granting access by accident.
 Reading the session makes `/admin/*` dynamic. That is correct — nothing gated on identity may be
 statically cached (`CLAUDE.md` §19).
 
+### 9.1 Storefront customer accounts
+
+Same Supabase project, same cookies, same `profiles` table — a separate set of screens and
+actions so the two audiences never share redirects.
+
+| File | Role |
+| --- | --- |
+| `lib/auth/customerRoutes.js` | `/login`, `/register`, `/account`… and `safeCustomerNextPath()` (rejects `/admin`). Edge-safe |
+| `lib/auth/customerActions.js` | Sign in, sign up, Google OAuth, resend confirmation, sign out, reset request, new password |
+| `lib/auth/account.js` | `getAccount()` → `guest` / `customer` / `admin` + display fields. `server-only` |
+| `app/auth/session/route.js` | JSON account state for the header (no tokens) |
+| `app/auth/callback/route.js` | Google OAuth return: PKCE code → session, or `/login?error=…` |
+| `app/auth/confirm/route.js` | Shared with admin. Accepts `token_hash` *and* PKCE `code`; `next` picks the audience |
+| `components/auth/` | Forms, `GoogleButton`, `AccountProvider` (header state), `SignOutButton` |
+| `components/layout/AccountMenu.jsx` | Header account control |
+
+- **Customer = signed in, no role.** Sign-up never sets `app_metadata`, so `hasDashboardAccess()`
+  is false and `/admin` answers `/admin/unauthorized`. Admins signing in on the storefront get an
+  "Admin dashboard" link — nothing more.
+- **Profiles come from the trigger**, never from app code: `handle_new_user()` (name, email,
+  Google photo) and `handle_user_metadata_update()`, which fills a blank name/photo when Google is
+  linked to an existing account. Migration `20260923180611_customer_profiles_from_oauth.sql`.
+- **Duplicate sign-up:** with email confirmation on, Supabase answers an existing address with a
+  user that has no identities; the form turns that into "An account already exists — sign in".
+- **Google + existing email:** Supabase links a Google identity to the existing user when the
+  email is verified, so the user id — and the one profile — is reused.
+
+**Dashboard setup (Supabase → Authentication):**
+
+1. **Providers → Google** — enable, paste the Google Cloud OAuth client id + secret. In Google
+   Cloud, the authorised redirect URI is `https://myyvolvdbilbslpyozte.supabase.co/auth/v1/callback`.
+   Until this is done the button explains that Google is unavailable instead of failing.
+2. **URL Configuration** — Site URL = production origin; Redirect URLs must include
+   `<origin>/auth/callback` and `<origin>/auth/confirm` for localhost and production.
+3. **SMTP (Settings → Auth → SMTP)** — the built-in sender only delivers to project team addresses
+   and a few emails an hour. Real customers cannot receive confirmation or reset emails until a
+   custom SMTP provider is configured.
+
 ### Assigning a role
 
 Supabase → Authentication → Users → the user → **User Metadata (app)**:
@@ -333,23 +371,58 @@ Valid ids: `super-admin` · `admin` · `manager` · `seo-manager` · `content-ed
 
 ---
 
-## 10. Scope: two live modules
+## 10. Scope: the V1 modules
 
-The sidebar is narrowed to **Dashboard, Users and Products**. Everything else is hidden, not
-deleted — `ENABLED_MODULES` in `constants/adminNav.js` controls what renders, and a module
-returns by adding its href back. Hidden routes still resolve by URL and still read static
-data; `adminNavFlat` keeps every entry so their breadcrumbs stay correct.
+V1 is deliberately small. The sidebar shows **Dashboard, Products, Categories, Inventory,
+Orders, Customers, Settings** (Settings holds only shipping, GST and Cash on Delivery). Everything else is hidden, not deleted —
+`ENABLED_MODULES` in `constants/adminNav.js` controls what renders. Hidden routes still resolve
+by URL and still read static data. `/admin/users` is the same screen as Customers under its
+old URL.
 
 ### Database-backed vs static
 
-Users and Products read Supabase. Every other module still reads `data/*.js`. The two
-overlap in one place worth remembering: **the storefront still renders from
-`data/products.js`**, so a product created in the dashboard does not yet appear on the site.
-Wiring the storefront to the database is a separate step.
+All five live modules read Supabase, and so does the storefront catalogue (`lib/catalog`,
+through the cookie-free cached client in `lib/supabase/public.js`). Every dashboard save calls
+`updateTag('catalog')`, so the shop reflects it on the next request; edits made directly in
+Supabase appear within 5 minutes.
+
+- **Orders** are created only by `create_order()` (called by `lib/checkout/actions.js` with the
+  service role after the server has priced the cart) and changed only by `update_order_status()`.
+  Totals always come from `lib/checkout/pricing.js`; the browser never sends a price.
+- **Carts** live in `carts`/`cart_items`, keyed by the httpOnly `knb_cart` cookie and closed to
+  every API role; `lib/cart` is the only code that touches them.
+- **Stock**: a COD order deducts stock when placed; cancelling returns it once. An online order
+  deducts stock only when its payment is recorded by `mark_order_paid()`.
+
+### Online payments (Razorpay)
+
+| Step | Where |
+| --- | --- |
+| Order saved `online` / `pending`, no stock taken; Razorpay order created for the exact total | `lib/checkout/actions.js` → `lib/payments/index.js` |
+| Razorpay Checkout opens in the browser | `components/checkout/razorpayCheckout.js` |
+| Success: signature checked with the key secret, payment re-read from the Razorpay API (right order, captured, exact paise, INR), then `mark_order_paid()` | `lib/payments/actions.js` `verifyPayment` |
+| Safety net + failed + refunds: signed webhook | `app/api/webhooks/razorpay/route.js` |
+| Retry: "Pay now" on the order page reuses the same Razorpay order | `components/checkout/PayNowButton.jsx` |
+
+- The browser can never mark an order paid; both paths re-verify with Razorpay's secret.
+- `mark_order_paid()` is idempotent — browser and webhook can both arrive.
+- Paid but out of stock (or paid after cancelling) → `stock_issue`; the admin order page says to
+  refund in the Razorpay dashboard or restock. Refunds are done in Razorpay; the webhook then
+  marks the order `refunded`.
+- Env: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`. Without the first
+  two, checkout offers Cash on Delivery only.
+
+- **Wholesale and cost prices** live in `product_trade_prices` (admin-only RLS). Customers get
+  wholesale prices only through `wholesale_offers()`, which returns rows only for an approved,
+  Active customer. Never add those columns to `products` — it is publicly readable.
+- **Stock** on a product with variants is the sum of its variants, kept by trigger; stock
+  status is derived from stock and the low-stock alert. Never write `stock_status` by hand.
+- **Images** upload to the public `catalog` bucket via `lib/actions/uploads.js`; storage RLS
+  allows admin writes only.
 
 | Layer | Files |
 | --- | --- |
-| Schema | `supabase/migrations/*.sql` — **written, not applied**. See `supabase/README.md` |
+| Schema | `supabase/migrations/*.sql` — applied with `npm run db:migrate`. See `supabase/README.md` |
 | Queries + mappers | `lib/db/{products,profiles,errors}.js`, all `server-only` |
 | Mutations | `lib/actions/{products,users}.js`, Server Actions that re-check the session |
 | List UI | `components/admin/modules/ServerListModule.jsx` |

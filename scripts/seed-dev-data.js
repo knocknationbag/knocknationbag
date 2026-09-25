@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 /**
- * Development seed — 3 users and 30 products.
+ * Development seed — 3 users and 30 products (DUMMY DATA).
  *
- *   node scripts/seed-dev-data.js
+ *   node scripts/seed-dev-data.js                  users + products
+ *   node scripts/seed-dev-data.js --catalog-only   products only (users untouched)
+ *
+ * Products are linked to the starting categories, priced in rupees, and a few
+ * get colour variants and wholesale offers. Category images are filled only
+ * where a category has none. Replace all of it with real products before launch.
  *
  * Requires the migrations in supabase/migrations to have been applied; without
  * them there is nothing to write to and the script says so rather than failing
@@ -55,8 +60,8 @@ async function loadAppHelpers() {
  */
 async function assertSchema(supabase) {
   const missing = []
-  for (const table of ['profiles', 'products']) {
-    const { error } = await supabase.from(table).select('id').limit(1)
+  for (const table of ['profiles', 'products', 'categories', 'product_variants', 'product_trade_prices']) {
+    const { error } = await supabase.from(table).select('*').limit(1)
     if (error) missing.push(`${table} (${error.message})`)
   }
   if (missing.length) {
@@ -111,14 +116,49 @@ async function seedUsers(supabase, generateTempPassword, now) {
 }
 
 async function seedProducts(supabase, seo, now) {
-  const rows = fixtures.products.map((product, index) => fixtures.toProductRow(product, index, seo, now))
+  const { data: categories, error: categoryError } = await supabase.from('categories').select('id, slug, image_url')
+  if (categoryError) throw new Error(`Could not read categories: ${categoryError.message}`)
+  const categoryId = Object.fromEntries(categories.map((c) => [c.slug, c.id]))
+
+  const rows = fixtures.products.map((product, index) => ({
+    ...fixtures.toProductRow(product, index, seo, now),
+    category_id: categoryId[fixtures.catalogExtras(product).categorySlug] ?? null,
+  }))
 
   // One upsert, not thirty inserts: a partial seed that failed halfway is worse
   // to recover from than one that either lands or does not.
-  const { error } = await supabase.from('products').upsert(rows, { onConflict: 'slug' })
+  const { data: saved, error } = await supabase.from('products').upsert(rows, { onConflict: 'slug' }).select('id, slug')
   if (error) throw new Error(`Could not write products: ${error.message}`)
+  const idBySlug = Object.fromEntries(saved.map((row) => [row.slug, row.id]))
 
-  return rows
+  const trade = []
+  const variants = []
+  fixtures.products.forEach((product, index) => {
+    const id = idBySlug[rows[index].slug]
+    const extras = fixtures.catalogExtras(product)
+    trade.push({ product_id: id, ...extras.trade })
+    extras.variants.forEach((variant) => variants.push({ product_id: id, ...variant }))
+  })
+
+  const { error: tradeError } = await supabase.from('product_trade_prices').upsert(trade, { onConflict: 'product_id' })
+  if (tradeError) throw new Error(`Could not write trade prices: ${tradeError.message}`)
+
+  // Variants are replaced wholesale for seeded products only.
+  const { error: clearError } = await supabase.from('product_variants').delete().in('product_id', Object.values(idBySlug))
+  if (clearError) throw new Error(`Could not reset variants: ${clearError.message}`)
+  if (variants.length) {
+    const { error: variantError } = await supabase.from('product_variants').insert(variants)
+    if (variantError) throw new Error(`Could not write variants: ${variantError.message}`)
+  }
+
+  for (const [slug, url] of Object.entries(fixtures.CATEGORY_IMAGES)) {
+    const category = categories.find((c) => c.slug === slug)
+    if (category && !category.image_url) {
+      await supabase.from('categories').update({ image_url: url }).eq('id', category.id)
+    }
+  }
+
+  return { rows, variants: variants.length, wholesale: trade.filter((t) => t.wholesale_price).length }
 }
 
 /** Read back rather than trusting the writes — this is what the dashboard sees. */
@@ -141,8 +181,9 @@ async function main() {
   const { seo, generateTempPassword } = await loadAppHelpers()
   const now = Date.now()
 
-  const users = await seedUsers(supabase, generateTempPassword, now)
-  const products = await seedProducts(supabase, seo, now)
+  const catalogOnly = process.argv.includes('--catalog-only')
+  const users = catalogOnly ? [] : await seedUsers(supabase, generateTempPassword, now)
+  const { rows: products, variants, wholesale } = await seedProducts(supabase, seo, now)
   const counts = await verify(supabase)
 
   const byStatus = products.reduce((acc, row) => ({ ...acc, [row.status]: (acc[row.status] ?? 0) + 1 }), {})
@@ -157,7 +198,7 @@ async function main() {
       (user) => `    ${user.name.padEnd(15)} ${user.email.padEnd(28)} ${user.status.padEnd(9)} ${user.password}`,
     ),
     '',
-    `  Products seeded   ${products.length}`,
+    `  Products seeded   ${products.length}  (${variants} variants, ${wholesale} with wholesale prices)`,
     `    by status       ${Object.entries(byStatus).map(([key, value]) => `${key} ${value}`).join('  ')}`,
     `    SEO score       ${Math.min(...scores)}–${Math.max(...scores)}`,
     '',

@@ -1,91 +1,94 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Check, RefreshCw, ShieldCheck, Truck } from 'lucide-react'
+import { Banknote, ShieldCheck, Truck } from 'lucide-react'
 
 import Container from '@/components/layout/Container'
 import Section from '@/components/layout/Section'
 import Breadcrumb from '@/components/common/Breadcrumb'
 import SectionHeader from '@/components/common/SectionHeader'
-import ReviewCard from '@/components/common/ReviewCard'
 import JsonLd from '@/components/common/JsonLd'
 import Badge from '@/components/ui/Badge'
-import Button from '@/components/ui/Button'
 import Tabs from '@/components/ui/Tabs'
-import QuantityStepper from '@/components/ui/QuantityStepper'
 import ProductGallery from '@/components/product/ProductGallery'
 import ProductGrid from '@/components/product/ProductGrid'
-import RecentlyViewed from '@/components/product/RecentlyViewed'
-import Rating from '@/components/product/Rating'
-import PriceTag from '@/components/product/PriceTag'
-import WishlistButton from '@/components/product/WishlistButton'
-import { products, getProductBySlug, getRelatedProducts } from '@/data/products'
-import { getCategory } from '@/data/catalog'
-import { reviews } from '@/data/reviews'
+import ProductPurchase from '@/components/product/ProductPurchase'
+import WholesaleOffer from '@/components/product/WholesaleOffer'
+import { getCatalog, getCategoryBySlug, getProductBySlug, getRelatedProducts } from '@/lib/catalog'
 import { site } from '@/constants/site'
 
+/** Only what has been decided for V1 — no invented delivery times or return windows. */
 const PROMISES = [
-  { icon: Truck, label: 'Free delivery over $150' },
-  { icon: RefreshCw, label: '30-day returns' },
-  { icon: ShieldCheck, label: '3-year warranty' },
+  { icon: Banknote, label: 'Cash on Delivery available' },
+  { icon: ShieldCheck, label: 'Secure online payment' },
+  { icon: Truck, label: 'Delivered to your door' },
 ]
 
-export function generateStaticParams() {
+const absolute = (src) => (src?.startsWith('http') ? src : `${site.url}${src}`)
+
+/** Pre-render every published product; new ones render on first visit. */
+export async function generateStaticParams() {
+  const { products } = await getCatalog()
   return products.map((product) => ({ slug: product.slug }))
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params
-  const product = getProductBySlug(slug)
+  const product = await getProductBySlug(slug)
   if (!product) return {}
 
+  const title = product.seo.title || product.title
+  const description = product.seo.description || `${product.title} from Knock Nation Bag.`
+  const image = product.seo.ogImage || product.image
+
   return {
-    title: product.title,
-    description: product.shortDescription,
-    alternates: { canonical: `/product/${slug}` },
+    title,
+    description,
+    alternates: { canonical: product.seo.canonical || `/product/${slug}` },
+    robots: product.seo.robots?.startsWith('noindex') ? { index: false, follow: true } : undefined,
     openGraph: {
       type: 'website',
-      title: `${product.title} | Knock Nation Bag`,
-      description: product.shortDescription,
+      title: product.seo.ogTitle || `${title} | Knock Nation Bag`,
+      description: product.seo.ogDescription || description,
       url: `/product/${slug}`,
-      images: [{ url: product.image, alt: product.imageAlt }],
+      images: [{ url: image, alt: product.imageAlt }],
     },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${product.title} | Knock Nation Bag`,
-      description: product.shortDescription,
-      images: [product.image],
-    },
+    twitter: { card: 'summary_large_image', title: `${title} | Knock Nation Bag`, description, images: [image] },
   }
 }
 
 export default async function ProductPage({ params }) {
   const { slug } = await params
-  const product = getProductBySlug(slug)
+  const product = await getProductBySlug(slug)
   if (!product) notFound()
 
-  const category = getCategory(product.category)
-  const related = getRelatedProducts(product, 4)
+  const [category, related] = await Promise.all([
+    product.category ? getCategoryBySlug(product.category) : null,
+    getRelatedProducts(product, 4),
+  ])
 
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.title,
-    description: product.shortDescription,
-    image: `${site.url}${product.image}`,
-    sku: product.id,
-    brand: { '@type': 'Brand', name: product.brand },
-    color: product.color,
-    material: product.material,
+    description: product.shortDescription || product.longDescription || undefined,
+    image: product.gallery.map(absolute),
+    sku: product.sku || undefined,
+    ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand } } : {}),
+    ...(product.material ? { material: product.material } : {}),
     offers: {
       '@type': 'Offer',
       url: `${site.url}/product/${product.slug}`,
       price: product.price,
       priceCurrency: product.currency,
-      availability: product.inStock
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+      availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     },
   }
+
+  const details = [
+    product.material && ['Material', product.material],
+    category && ['Category', category.title],
+    product.sku && ['SKU', product.sku],
+  ].filter(Boolean)
 
   return (
     <>
@@ -95,7 +98,8 @@ export default async function ProductPage({ params }) {
         <Breadcrumb
           items={[
             { label: 'Shop', href: '/shop' },
-            { label: category?.title ?? 'Products', href: `/category/${product.category}` },
+            ...(category?.parent ? [{ label: category.parent.title, href: `/category/${category.parent.slug}` }] : []),
+            ...(category ? [{ label: category.title, href: `/category/${category.slug}` }] : []),
             { label: product.title },
           ]}
         />
@@ -116,50 +120,28 @@ export default async function ProductPage({ params }) {
           />
 
           <div>
-            <p className="font-mono text-eyebrow uppercase text-gold">{product.brand}</p>
-            <h1 className="mt-3 text-h2 font-extrabold text-ink md:text-h2-md xl:text-h2-xl">
-              {product.title}
-            </h1>
+            {product.brand ? <p className="font-mono text-eyebrow uppercase text-gold">{product.brand}</p> : null}
+            <h1 className="mt-3 text-h2 font-extrabold text-ink md:text-h2-md xl:text-h2-xl">{product.title}</h1>
 
-            <div className="mt-4 flex flex-wrap items-center gap-4">
-              <Rating value={product.rating} size={16} />
-              <Link href="#reviews" className="text-[14px] text-body underline-offset-4 hover:text-gold hover:underline">
-                {product.reviewCount} reviews
-              </Link>
-            </div>
+            {product.shortDescription ? (
+              <p className="mt-5 max-w-[60ch] text-lead text-body">{product.shortDescription}</p>
+            ) : null}
 
-            <div className="mt-6 flex items-end gap-4">
-              <PriceTag price={product.price} oldPrice={product.oldPrice} size="lg" />
-              {product.discount > 0 ? <Badge variant="new">Save {product.discount}%</Badge> : null}
-            </div>
+            <ProductPurchase product={product} />
+            <WholesaleOffer productId={product.id} />
 
-            <p className="mt-6 max-w-[60ch] text-lead text-body">{product.shortDescription}</p>
+            {details.length ? (
+              <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-border pt-6 text-[14px]">
+                {details.map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="inline text-body">{label}: </dt>
+                    <dd className="inline font-semibold text-ink">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
 
-            <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-3 text-[14px]">
-              <div><dt className="inline text-body">Colour: </dt><dd className="inline font-semibold text-ink">{product.color}</dd></div>
-              <div><dt className="inline text-body">Material: </dt><dd className="inline font-semibold text-ink">{product.material}</dd></div>
-              <div><dt className="inline text-body">Category: </dt><dd className="inline font-semibold text-ink">{category?.title}</dd></div>
-              <div>
-                <dt className="inline text-body">Availability: </dt>
-                <dd className={`inline font-semibold ${product.inStock ? 'text-verified-fg' : 'text-danger'}`}>
-                  {product.inStock ? 'In stock' : 'Out of stock'}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <QuantityStepper max={product.inStock ? 10 : 1} />
-              <Button variant="primary" size="lg" className="flex-1 sm:flex-none" disabled={!product.inStock}>
-                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-              </Button>
-              <WishlistButton
-                productId={product.slug}
-                title={product.title}
-                className="border border-border !size-12 hover:border-border-hover"
-              />
-            </div>
-
-            <ul className="mt-8 flex flex-col gap-3 border-t border-border pt-6">
+            <ul className="mt-6 flex flex-col gap-3 border-t border-border pt-6">
               {PROMISES.map(({ icon: Icon, label }) => (
                 <li key={label} className="flex items-center gap-3 text-[14px] text-body">
                   <Icon size={18} strokeWidth={2} className="text-gold" aria-hidden="true" />
@@ -177,42 +159,42 @@ export default async function ProductPage({ params }) {
               id: 'description',
               label: 'Description',
               content: (
-                <div className="max-w-[70ch]">
-                  <p className="text-[16px] leading-[28px] text-body">{product.longDescription}</p>
-                  <ul className="mt-6 flex flex-col gap-3">
-                    {product.features.map((feature) => (
-                      <li key={feature} className="flex gap-3 text-[15px] text-body">
-                        <Check size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-gold" aria-hidden="true" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="max-w-[70ch] whitespace-pre-line text-[16px] leading-[28px] text-body">
+                  {product.longDescription || product.shortDescription || 'Full description coming soon.'}
                 </div>
               ),
             },
-            {
-              id: 'specifications',
-              label: 'Specifications',
-              content: (
-                <table className="w-full max-w-[560px] text-left text-[15px]">
-                  <tbody>
-                    {product.specifications.map((spec) => (
-                      <tr key={spec.label} className="border-b border-border last:border-0">
-                        <th scope="row" className="py-3 pr-6 font-semibold text-ink">{spec.label}</th>
-                        <td className="py-3 text-body">{spec.value}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ),
-            },
+            ...(product.specifications.length
+              ? [{
+                  id: 'specifications',
+                  label: 'Specifications',
+                  content: (
+                    <table className="w-full max-w-[560px] text-left text-[15px]">
+                      <tbody>
+                        {product.specifications.map((spec) => (
+                          <tr key={spec.label} className="border-b border-border last:border-0">
+                            <th scope="row" className="py-3 pr-6 font-semibold text-ink">{spec.label}</th>
+                            <td className="py-3 text-body">{spec.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ),
+                }]
+              : []),
             {
               id: 'shipping',
-              label: 'Shipping & Returns',
+              label: 'Delivery & Returns',
               content: (
                 <div className="max-w-[70ch] text-[15px] leading-[26px] text-body">
-                  <p>Standard delivery is free on orders over $150 and arrives in 3–5 working days. Express delivery arrives next working day when ordered before 2pm.</p>
-                  <p className="mt-4">Returns are free within the United States for 30 days from delivery. Read the full <Link href="/returns" className="font-semibold text-ink underline underline-offset-4 hover:text-gold">return policy</Link> and <Link href="/warranty" className="font-semibold text-ink underline underline-offset-4 hover:text-gold">warranty terms</Link>.</p>
+                  <p>
+                    Pay online or choose Cash on Delivery at checkout. Delivery charges are shown in your
+                    cart before you pay.
+                  </p>
+                  <p className="mt-4">
+                    Read our <Link href="/shipping" className="font-semibold text-ink underline underline-offset-4 hover:text-gold">shipping policy</Link> and{' '}
+                    <Link href="/returns" className="font-semibold text-ink underline underline-offset-4 hover:text-gold">return policy</Link>.
+                  </p>
                 </div>
               ),
             },
@@ -220,25 +202,12 @@ export default async function ProductPage({ params }) {
         />
       </Container>
 
-      <Section background="muted" id="reviews">
-        <SectionHeader eyebrow="THE NATION SPEAKS" title="Customer Reviews" />
-        <ul className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3 xl:gap-6">
-          {reviews.map((review) => (
-            <li key={review.id} className="flex">
-              <ReviewCard {...review} className="w-full !bg-surface" />
-            </li>
-          ))}
-        </ul>
-      </Section>
-
       {related.length > 0 ? (
-        <Section background="surface">
-          <SectionHeader eyebrow="COMPLETE THE SYSTEM" title="You May Also Like" />
+        <Section background="muted">
+          <SectionHeader eyebrow="MORE TO EXPLORE" title="You May Also Like" />
           <ProductGrid products={related} columns={4} />
         </Section>
       ) : null}
-
-      <RecentlyViewed currentSlug={product.slug} allProducts={products} />
     </>
   )
 }

@@ -8,7 +8,8 @@ const CONTROL =
 /**
  * Labelled form control. Every input on the site goes through this, so no field
  * ever ships without a label (docs/accessibility.md §6).
- * `as` renders input | textarea | select.
+ * `as` renders input | textarea | select. `adornment` sits inside the right
+ * edge of an input (e.g. a show-password toggle) and positions itself.
  */
 export default function Field({
   as = 'input',
@@ -17,6 +18,7 @@ export default function Field({
   hideLabel = false,
   error,
   hint,
+  adornment,
   className,
   children,
   ...props
@@ -54,6 +56,11 @@ export default function Field({
         <select {...shared} className={cn(CONTROL, 'h-12 appearance-none pr-12', error && 'border-danger')}>
           {children}
         </select>
+      ) : adornment ? (
+        <div className="relative">
+          <input {...shared} className={cn(CONTROL, 'h-12 pr-14', error && 'border-danger')} />
+          {adornment}
+        </div>
       ) : (
         <input {...shared} className={cn(CONTROL, 'h-12', error && 'border-danger')} />
       )}

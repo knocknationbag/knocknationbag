@@ -19,7 +19,7 @@ const ALL_NAV = [
     group: 'Catalogue',
     items: [
       { label: 'Products', href: '/admin/products', icon: 'products' },
-      { label: 'Categories', href: '/admin/categories', icon: 'categories', count: 8 },
+      { label: 'Categories', href: '/admin/categories', icon: 'categories' },
       { label: 'Collections', href: '/admin/collections', icon: 'collections', count: 4 },
       { label: 'Brands', href: '/admin/brands', icon: 'brands', count: 4 },
       { label: 'Inventory', href: '/admin/inventory', icon: 'inventory' },
@@ -28,7 +28,7 @@ const ALL_NAV = [
   {
     group: 'Sales',
     items: [
-      { label: 'Orders', href: '/admin/orders', icon: 'orders', count: 3 },
+      { label: 'Orders', href: '/admin/orders', icon: 'orders' },
       { label: 'Customers', href: '/admin/customers', icon: 'customers' },
       { label: 'Reviews', href: '/admin/reviews', icon: 'reviews' },
       { label: 'Coupons', href: '/admin/coupons', icon: 'coupons' },
@@ -66,7 +66,15 @@ const ALL_NAV = [
  * The modules currently exposed in the sidebar. Add an href to bring a module
  * back — its route, components and data are all still in the codebase.
  */
-export const ENABLED_MODULES = ['/admin/dashboard', '/admin/users', '/admin/products']
+export const ENABLED_MODULES = [
+  '/admin/dashboard',
+  '/admin/products',
+  '/admin/categories',
+  '/admin/inventory',
+  '/admin/orders',
+  '/admin/customers',
+  '/admin/settings',
+]
 
 /** What the sidebar renders — enabled modules only, empty groups dropped. */
 export const adminNav = ALL_NAV

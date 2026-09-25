@@ -4,8 +4,9 @@ import Link from 'next/link'
 import Logo from './Logo'
 
 /**
- * Split layout shared by login, register and forgot-password so the three auth
- * screens cannot drift apart. Right panel is decorative and hidden below xl.
+ * Split layout shared by the storefront auth screens (login, register,
+ * forgot-password, reset-password) so they cannot drift apart. Right panel is
+ * decorative and hidden below xl.
  */
 export default function AuthShell({ title, description, children, footer }) {
   return (
@@ -22,7 +23,11 @@ export default function AuthShell({ title, description, children, footer }) {
           {footer ? <div className="mt-8 text-[15px] text-body">{footer}</div> : null}
 
           <p className="mt-10 text-[13px] text-body">
-            This is a static demonstration. No account is created and nothing is submitted. Read our{' '}
+            By continuing you agree to our{' '}
+            <Link href="/terms" className="font-semibold text-ink underline underline-offset-4 hover:text-gold">
+              terms of use
+            </Link>{' '}
+            and{' '}
             <Link href="/privacy" className="font-semibold text-ink underline underline-offset-4 hover:text-gold">
               privacy policy
             </Link>

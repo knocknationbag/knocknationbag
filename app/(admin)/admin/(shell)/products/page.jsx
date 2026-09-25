@@ -28,7 +28,7 @@ export default async function AdminProductsPage({ searchParams }) {
     <>
       <AdminPageHeader
         title="Products"
-        description="The catalogue. Only Published products are readable by the storefront."
+        description="Everything you sell. Only Published products appear in the shop."
         actions={
           <AdminButton href="/admin/products/new" variant="primary" size="sm" icon={Plus}>
             New product
@@ -57,7 +57,7 @@ export default async function AdminProductsPage({ searchParams }) {
         columns={[
           { key: 'name', header: 'Product', type: 'title', imageKey: 'image', slugKey: 'slug', hrefBase: '/admin/products', linkKey: 'id', width: '30%' },
           { key: 'sku', header: 'SKU', type: 'mono' },
-          { key: 'category', header: 'Category' },
+          { key: 'categoryName', header: 'Category' },
           { key: 'displayPrice', header: 'Price', type: 'money', align: 'right' },
           { key: 'stock', header: 'Stock', type: 'stock', align: 'right' },
           { key: 'seoScore', header: 'SEO', type: 'seoScore', align: 'center' },

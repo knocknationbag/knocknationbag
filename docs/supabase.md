@@ -93,6 +93,7 @@ cp .env.local.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | Public | Project Settings → API → Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Project Settings → API → `anon` / `public` |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret** | Project Settings → API → `service_role` |
+| `SUPABASE_DB_URL` | **Secret**, optional | Connect → Session pooler. Only the `db:*` scripts read it — never the app |
 
 - The two `NEXT_PUBLIC_*` values are meant to be public. **Row Level Security** is what protects
   your data, not the secrecy of the anon key.
@@ -159,9 +160,12 @@ knowing it means accepting a script-readable token.
 
 ## 7. What is deliberately not built
 
-No tables, migrations or SQL. No CRUD. No storage. Authentication exists (see
-[`admin.md` §9](./admin.md#9-authentication)) but the data layer is still the static arrays in
-`data/*.js`.
+No storage. Authentication exists (see [`admin.md` §9](./admin.md#9-authentication)), and the
+admin dashboard reads and writes `profiles` and `products` through `lib/db/*` and `lib/actions/*`.
+The storefront data layer is still the static arrays in `data/*.js`.
+
+The schema lives in `supabase/migrations/` — how to change it is in
+[`supabase/README.md`](../supabase/README.md). Never change the schema from the dashboard.
 
 When the data layer starts, add `lib/api/*.js` fetchers that call these clients and map rows to the
 shape in [`architecture.md` §4.1](./architecture.md#41-the-data-contract); no component should change.

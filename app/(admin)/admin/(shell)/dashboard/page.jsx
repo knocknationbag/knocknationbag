@@ -1,179 +1,118 @@
-import Link from 'next/link'
 import Image from 'next/image'
-import {
-  BadgeCheck, DollarSign, Gauge, Percent, Plus, Search, ShoppingCart, TrendingUp,
-} from 'lucide-react'
+import Link from 'next/link'
+import { AlertTriangle, Clock, IndianRupee, Package, PackageX, Plus, ShoppingCart, Users } from 'lucide-react'
 
 import AdminPageHeader from '@/components/admin/layout/AdminPageHeader'
 import AdminCard from '@/components/admin/ui/AdminCard'
 import AdminButton from '@/components/admin/ui/AdminButton'
+import AdminEmptyState from '@/components/admin/ui/AdminEmptyState'
 import StatCard from '@/components/admin/ui/StatCard'
 import StatusBadge from '@/components/admin/ui/StatusBadge'
-import DataTable from '@/components/admin/ui/DataTable'
-import { adminProducts, kpis, recentOrders, seoKpis } from '@/data/admin'
+import { listProducts, productStats } from '@/lib/db/products'
+import { customerStats } from '@/lib/db/profiles'
+import { listOrders, orderStats } from '@/lib/db/orders'
+import { PAYMENT_STATUS_LABELS } from '@/constants/orders'
 import { formatPrice } from '@/utils/formatPrice'
+import { formatAdminDate } from '@/utils/formatDate'
 
 export const metadata = { title: 'Dashboard' }
 
-const KPI_ICONS = { revenue: DollarSign, orders: ShoppingCart, aov: TrendingUp, conversion: Percent }
+const show = (value) => (value === null || value === undefined ? '—' : value.toLocaleString('en-IN'))
 
-/** Sparkline drawn as an inline SVG polyline — no chart dependency. */
-function Sparkline({ points, className }) {
-  const max = Math.max(...points)
-  const min = Math.min(...points)
-  const range = max - min || 1
-  const path = points
-    .map((p, i) => `${(i / (points.length - 1)) * 100},${28 - ((p - min) / range) * 26}`)
-    .join(' ')
-
-  return (
-    <svg viewBox="0 0 100 28" preserveAspectRatio="none" className={className} aria-hidden="true">
-      <polyline points={path} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-    </svg>
-  )
-}
-
-const WEEKLY_REVENUE = [18, 24, 21, 32, 28, 39, 35, 44, 41, 52, 48, 61]
-
-export default function AdminDashboardPage() {
-  const needsSeo = [...adminProducts].sort((a, b) => a.seoScore - b.seoScore).slice(0, 5)
+/**
+ * The owner's first screen: what came in, what needs doing, what is running
+ * out. Every number is live from the database. "Sales" counts every order
+ * that is not cancelled, including Cash on Delivery orders not yet collected.
+ */
+export default async function DashboardPage() {
+  const [products, customers, orders, recent, attention] = await Promise.all([
+    productStats(),
+    customerStats(),
+    orderStats(),
+    listOrders({ pageSize: 6 }),
+    listProducts({ stock: 'attention', order: 'stock', pageSize: 8 }),
+  ])
 
   return (
     <>
       <AdminPageHeader
         title="Dashboard"
-        description="Trading overview for the last 30 days, and anything that needs attention."
+        description="Your shop at a glance."
         actions={
-          <>
-            <AdminButton href="/admin/analytics" size="sm" icon={Gauge}>Analytics</AdminButton>
-            <AdminButton href="/admin/products/new" variant="primary" size="sm" icon={Plus}>New product</AdminButton>
-          </>
+          <div className="flex gap-2">
+            <AdminButton href="/admin/categories/new" size="sm" icon={Plus}>Category</AdminButton>
+            <AdminButton href="/admin/products/new" variant="primary" size="sm" icon={Plus}>Product</AdminButton>
+          </div>
         }
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((kpi) => (
-          <StatCard key={kpi.label} {...kpi} icon={KPI_ICONS[kpi.icon]} />
-        ))}
+        <StatCard label="Total orders" value={show(orders?.totalOrders)} icon={ShoppingCart}
+          hint={orders ? `${orders.todayOrders} today` : undefined} />
+        <StatCard label="Total sales" value={orders ? formatPrice(orders.totalSales) : '—'} icon={IndianRupee}
+          hint={orders ? `${formatPrice(orders.todaySales)} today` : undefined} />
+        <StatCard label="Pending orders" value={show(orders?.pendingOrders)} icon={Clock}
+          hint={orders ? `${orders.toShip} to ship${orders.awaitingPayment ? ` · ${orders.awaitingPayment} awaiting online payment` : ''}` : undefined} />
+        <StatCard label="Customers" value={show(customers.total)} icon={Users}
+          hint={customers.wholesale ? `${customers.wholesale} approved wholesale` : 'No wholesale approvals yet'} />
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <AdminCard
-          title="Revenue trend"
-          description="Rolling 12 weeks"
-          actions={<AdminButton href="/admin/analytics" size="xs" variant="ghost">View report</AdminButton>}
-        >
-          <div className="flex items-end gap-1.5">
-            {WEEKLY_REVENUE.map((v, i) => (
-              <div key={i} className="flex-1">
-                <div
-                  className="rounded-t-[3px] bg-ink/85 transition-colors hover:bg-gold"
-                  style={{ height: `${(v / Math.max(...WEEKLY_REVENUE)) * 120}px` }}
-                  title={`Week ${i + 1}: $${v}k`}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 flex items-center justify-between text-admin-xs text-muted">
-            <span>12 weeks ago</span>
-            <span className="inline-flex items-center gap-1 text-verified-fg">
-              <TrendingUp size={12} aria-hidden="true" /> +18% quarter on quarter
-            </span>
-            <span>This week</span>
-          </div>
-        </AdminCard>
-
-        <AdminCard
-          title="SEO health"
-          description="Highest priority — checked on every save"
-          actions={<AdminButton href="/admin/seo" size="xs" variant="ghost" icon={Search}>SEO</AdminButton>}
-        >
-          <ul className="flex flex-col gap-2.5">
-            {seoKpis.map((k) => (
-              <li key={k.label} className="flex items-baseline justify-between gap-3">
-                <span className="text-admin text-body">{k.label}</span>
-                <span className="text-right">
-                  <span className="text-admin-md font-bold text-ink">{k.value}</span>
-                  <span className="ml-1.5 text-admin-xs text-muted">{k.hint}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-3 flex items-center gap-2 rounded-badge border border-border bg-surface-muted px-2.5 py-2">
-            <Sparkline points={[62, 66, 71, 69, 74, 78, 80, 82]} className="h-7 w-16 text-verified-fg" />
-            <p className="text-admin-xs text-body">Average score improving — 82 this week</p>
-          </div>
-        </AdminCard>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <StatCard label="Products in the shop" value={show(products.published)} icon={Package}
+          hint={products.drafts ? `${products.drafts} draft${products.drafts === 1 ? '' : 's'} not yet published` : 'All published'} />
+        <StatCard label="Low stock" value={show(products.low)} icon={AlertTriangle} hint="At or below alert level" />
+        <StatCard label="Out of stock" value={show(products.out)} icon={PackageX} hint="Cannot be bought" />
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <AdminCard
           title="Recent orders"
           padded={false}
-          actions={<AdminButton href="/admin/orders" size="xs" variant="ghost">All orders</AdminButton>}
+          actions={<AdminButton href="/admin/orders" size="xs">All orders</AdminButton>}
         >
-          <DataTable
-            rows={recentOrders.slice(0, 6)}
-            columns={[
-              {
-                key: 'id', header: 'Order',
-                render: (r) => (
-                  <Link href="/admin/orders" className="font-mono text-admin-sm font-semibold text-ink hover:text-gold">
-                    {r.id}
-                  </Link>
-                ),
-              },
-              {
-                key: 'customer', header: 'Customer',
-                render: (r) => (
-                  <span className="block min-w-0">
-                    <span className="block truncate font-medium text-ink">{r.customer}</span>
-                    <span className="block truncate text-admin-xs text-muted">{r.email}</span>
-                  </span>
-                ),
-              },
-              { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-              { key: 'total', header: 'Total', align: 'right', render: (r) => <span className="font-semibold tabular-nums text-ink">{formatPrice(r.total)}</span> },
-            ]}
-          />
+          {recent.rows.length === 0 ? (
+            <AdminEmptyState icon={ShoppingCart} title="No orders yet" description="New orders appear here as soon as they are placed." />
+          ) : (
+            <ul>
+              {recent.rows.map((o) => (
+                <li key={o.id} className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-0">
+                  <Link href={`/admin/orders/${o.id}`} className="w-24 shrink-0 text-admin font-semibold text-ink hover:text-gold">{o.number}</Link>
+                  <span className="min-w-0 flex-1 truncate text-admin text-body">{o.customerName} · {formatAdminDate(o.createdAt)}</span>
+                  <span className="text-admin font-semibold tabular-nums text-ink">{formatPrice(o.total)}</span>
+                  <StatusBadge status={o.status} />
+                  <span className="hidden sm:inline"><StatusBadge status={PAYMENT_STATUS_LABELS[o.paymentStatus]} /></span>
+                </li>
+              ))}
+            </ul>
+          )}
         </AdminCard>
 
         <AdminCard
-          title="Lowest SEO scores"
-          description="Fix these before publishing anything new"
+          title="Needs attention"
+          description="Products that are low or out of stock."
           padded={false}
-          actions={<AdminButton href="/admin/products" size="xs" variant="ghost">Products</AdminButton>}
+          actions={<AdminButton href="/admin/inventory" size="xs">Open inventory</AdminButton>}
         >
-          <ul className="divide-y divide-border">
-            {needsSeo.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="relative size-8 shrink-0 overflow-hidden rounded-badge border border-border">
-                  <Image src={p.image} alt="" fill sizes="32px" className="object-cover" />
-                </span>
-                <Link href={`/admin/products/${p.slug}`} className="min-w-0 flex-1 truncate text-admin font-medium text-ink hover:text-gold">
-                  {p.title}
-                </Link>
-                <StatusBadge
-                  status={String(p.seoScore)}
-                  tone={p.seoScore >= 85 ? 'success' : p.seoScore >= 70 ? 'warning' : 'danger'}
-                />
-              </li>
-            ))}
-          </ul>
+          {attention.rows.length === 0 ? (
+            <AdminEmptyState title="All stocked up" description="No product is at or below its low-stock alert." />
+          ) : (
+            <ul>
+              {attention.rows.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 border-b border-border px-4 py-2.5 last:border-0">
+                  <span className="relative size-9 shrink-0 overflow-hidden rounded-badge border border-border bg-surface-muted">
+                    {p.featuredImage ? <Image src={p.featuredImage} alt="" fill sizes="36px" className="object-cover" /> : null}
+                  </span>
+                  <Link href={`/admin/products/${p.id}`} className="min-w-0 flex-1 truncate text-admin font-semibold text-ink hover:text-gold">
+                    {p.name}
+                  </Link>
+                  <span className="text-admin-sm tabular-nums text-body">{p.stock} left</span>
+                  <StatusBadge status={p.stockStatus} />
+                </li>
+              ))}
+            </ul>
+          )}
         </AdminCard>
       </div>
-
-      <AdminCard title="Quick actions" className="mt-4">
-        <div className="flex flex-wrap gap-2">
-          <AdminButton href="/admin/products/new" size="sm" icon={Plus}>Add product</AdminButton>
-          <AdminButton href="/admin/categories" size="sm" icon={Plus}>Add category</AdminButton>
-          <AdminButton href="/admin/pages" size="sm" icon={Plus}>New CMS page</AdminButton>
-          <AdminButton href="/admin/blog" size="sm" icon={Plus}>Write a post</AdminButton>
-          <AdminButton href="/admin/redirects" size="sm" icon={Plus}>Add redirect</AdminButton>
-          <AdminButton href="/admin/media" size="sm" icon={BadgeCheck}>Review unused media</AdminButton>
-        </div>
-      </AdminCard>
     </>
   )
 }

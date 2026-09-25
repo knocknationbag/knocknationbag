@@ -1,7 +1,7 @@
 import Button from './Button'
 import { cn } from '@/utils/cn'
 
-/** Shared empty state for cart, wishlist, search and filtered listings. */
+/** Shared empty state for cart, search and filtered listings. */
 export default function EmptyState({
   icon: Icon,
   title,

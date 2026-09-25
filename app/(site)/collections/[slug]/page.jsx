@@ -2,37 +2,33 @@ import { notFound } from 'next/navigation'
 
 import PageHeader from '@/components/common/PageHeader'
 import ProductListing from '@/components/product/ProductListing'
-import { products } from '@/data/products'
-import { collections, getCollection } from '@/data/catalog'
+import { COLLECTIONS, COLLECTION_ALIASES } from '@/constants/catalog'
+import { getCollectionProducts } from '@/lib/catalog'
 
 export function generateStaticParams() {
-  return collections.map((collection) => ({ slug: collection.slug }))
+  return [...COLLECTIONS.map((c) => c.slug), ...Object.keys(COLLECTION_ALIASES)].map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params
-  const collection = getCollection(slug)
-  if (!collection) return {}
+  const result = await getCollectionProducts(slug)
+  if (!result) return {}
+  const { collection } = result
 
   return {
     title: collection.title,
     description: collection.description,
-    alternates: { canonical: `/collections/${slug}` },
-    openGraph: {
-      title: `${collection.title} | Knock Nation Bag`,
-      url: `/collections/${slug}`,
-      images: [{ url: collection.image }],
-    },
+    // An alias (e.g. best-sellers) canonicalises to the collection it shows.
+    alternates: { canonical: `/collections/${collection.slug}` },
+    openGraph: { title: `${collection.title} | Knock Nation Bag`, url: `/collections/${collection.slug}` },
   }
 }
 
 export default async function CollectionPage({ params, searchParams }) {
-  const { slug } = await params
-  const query = await searchParams
-  const collection = getCollection(slug)
-  if (!collection) notFound()
-
-  const items = products.filter(collection.match)
+  const [{ slug }, query] = await Promise.all([params, searchParams])
+  const result = await getCollectionProducts(slug)
+  if (!result) notFound()
+  const { collection, products } = result
 
   return (
     <>
@@ -42,7 +38,7 @@ export default async function CollectionPage({ params, searchParams }) {
         description={collection.description}
         breadcrumbs={[{ label: 'Collections', href: '/collections' }, { label: collection.title }]}
       />
-      <ProductListing products={items} params={query} basePath={`/collections/${slug}`} />
+      <ProductListing products={products} params={query} basePath={`/collections/${slug}`} />
     </>
   )
 }

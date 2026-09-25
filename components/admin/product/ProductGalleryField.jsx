@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
 import { ImagePlus, MoveLeft, MoveRight, X } from 'lucide-react'
 
 import AdminCard from '@/components/admin/ui/AdminCard'
 import AdminButton from '@/components/admin/ui/AdminButton'
 import AdminEmptyState from '@/components/admin/ui/AdminEmptyState'
-import MediaPicker from '@/components/admin/media/MediaPicker'
+import ImageUploadField from '@/components/admin/ui/ImageUploadField'
 
 /**
  * Gallery images, in order.
@@ -17,10 +16,7 @@ import MediaPicker from '@/components/admin/media/MediaPicker'
  * change it. Drag-only reordering would put that out of reach.
  */
 export default function ProductGalleryField({ images = [], onChange }) {
-  const [picking, setPicking] = useState(false)
-
-  function add(picked) {
-    const incoming = picked.map((item) => item.src)
+  function add(incoming) {
     // Dedupe: the same file selected twice is one image, not two.
     onChange?.([...images, ...incoming.filter((src) => !images.includes(src))])
   }
@@ -37,19 +33,13 @@ export default function ProductGalleryField({ images = [], onChange }) {
     <AdminCard
       title="Gallery"
       description={images.length ? `${images.length} image${images.length === 1 ? '' : 's'}, shown in this order.` : 'Additional images.'}
-      actions={
-        <AdminButton size="xs" icon={ImagePlus} onClick={() => setPicking(true)}>
-          Add images
-        </AdminButton>
-      }
+      actions={<ImageUploadField multiple folder="products" label="Upload images" onAdd={add} />}
     >
       {images.length === 0 ? (
         <AdminEmptyState
           icon={ImagePlus}
           title="No gallery images"
-          description="Choose images from the Media Library."
-          actionLabel="Add images"
-          onAction={() => setPicking(true)}
+          description="Upload extra photos: other angles, the inside, the bag being worn."
         />
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
@@ -77,13 +67,6 @@ export default function ProductGalleryField({ images = [], onChange }) {
         </ul>
       )}
 
-      <MediaPicker
-        open={picking}
-        onClose={() => setPicking(false)}
-        onSelect={add}
-        multiple
-        title="Add gallery images"
-      />
     </AdminCard>
   )
 }

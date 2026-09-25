@@ -6,10 +6,9 @@ import { Save } from 'lucide-react'
 
 import AdminCard from '@/components/admin/ui/AdminCard'
 import AdminButton from '@/components/admin/ui/AdminButton'
-import AdminField from '@/components/admin/ui/AdminField'
+import AdminField, { AdminToggle } from '@/components/admin/ui/AdminField'
 import AdminPageHeader from '@/components/admin/layout/AdminPageHeader'
 import AuthMessage from '@/components/admin/auth/AuthMessage'
-import { MediaPickerField } from '@/components/admin/media/MediaPicker'
 import CopyField from '@/components/admin/ui/CopyField'
 import { createUser, updateUser } from '@/lib/actions/users'
 import { USER_STATUSES } from '@/constants/recordStatus'
@@ -21,11 +20,9 @@ const INITIAL = { ok: false, error: null, fieldErrors: {} }
  * posts to and whether a temporary password comes back, so forking it into two
  * components would mean maintaining every field twice.
  */
-export default function UserForm({ user = null }) {
+export default function UserForm({ user = null, basePath = '/admin/customers', noun = 'customer' }) {
   const editing = Boolean(user?.id)
-  // The picker is a dialog, not an <input>, so its value rides along in a
-  // hidden field rather than being read from the DOM.
-  const [avatar, setAvatar] = useState(user?.avatarUrl ?? '')
+  const [wholesale, setWholesale] = useState(Boolean(user?.isWholesaleApproved))
   const [state, formAction, pending] = useActionState(editing ? updateUser : createUser, INITIAL)
   const errors = state.fieldErrors ?? {}
 
@@ -33,7 +30,7 @@ export default function UserForm({ user = null }) {
   if (state.ok && state.tempPassword) {
     return (
       <>
-        <AdminPageHeader title="User created" description={`${state.email} can now sign in.`} />
+        <AdminPageHeader title="Account created" description={`${state.email} can now sign in.`} />
         <AdminCard title="Temporary password" description="Shown once. Copy it now — it is not stored anywhere.">
           <div className="flex flex-col gap-3">
             <CopyField label="Email" value={state.email} />
@@ -43,8 +40,8 @@ export default function UserForm({ user = null }) {
               you cannot delete it from.
             </AuthMessage>
             <div className="flex gap-2">
-              <AdminButton href="/admin/users" variant="primary" size="md">Back to users</AdminButton>
-              <AdminButton href="/admin/users/new" size="md">Add another</AdminButton>
+              <AdminButton href={basePath} variant="primary" size="md">Back to {noun}s</AdminButton>
+              <AdminButton href={`${basePath}/new`} size="md">Add another</AdminButton>
             </div>
           </div>
         </AdminCard>
@@ -55,7 +52,9 @@ export default function UserForm({ user = null }) {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {editing ? <input type="hidden" name="id" value={user.id} /> : null}
-      <input type="hidden" name="avatarUrl" value={avatar} />
+      {/* Photos come from the customer's own sign-in (e.g. Google); kept as-is. */}
+      <input type="hidden" name="avatarUrl" value={user?.avatarUrl ?? ''} />
+      {wholesale ? <input type="hidden" name="isWholesaleApproved" value="on" /> : null}
 
       {state.error ? <AuthMessage tone="error">{state.error}</AuthMessage> : null}
       {state.ok && editing ? <AuthMessage tone="success">Changes saved.</AuthMessage> : null}
@@ -83,15 +82,19 @@ export default function UserForm({ user = null }) {
         </AdminCard>
 
         <div className="flex flex-col gap-4">
-          <AdminCard title="Profile image">
-            <MediaPickerField
-              id="avatar" label="Profile image" hint="Square images work best."
-              value={avatar} onChange={setAvatar}
+          <AdminCard title="Wholesale">
+            <AdminToggle
+              id="wholesale"
+              label="Approved wholesale"
+              hint="Sees wholesale prices on products that have one, when buying at least the minimum quantity."
+              checked={wholesale}
+              onChange={setWholesale}
             />
           </AdminCard>
 
           <AdminCard title="Status">
-            <AdminField id="status" name="status" as="select" label="Account status" defaultValue={user?.status ?? 'Active'}>
+            <AdminField id="status" name="status" as="select" label="Account status" defaultValue={user?.status ?? 'Active'}
+              hint="Inactive accounts lose wholesale pricing.">
               {USER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </AdminField>
           </AdminCard>
@@ -100,10 +103,10 @@ export default function UserForm({ user = null }) {
 
       <div className="flex flex-wrap items-center gap-2">
         <AdminButton type="submit" variant="primary" size="md" icon={Save} disabled={pending}>
-          {pending ? 'Saving…' : editing ? 'Save changes' : 'Create user'}
+          {pending ? 'Saving…' : editing ? 'Save changes' : `Create ${noun}`}
         </AdminButton>
         <Link
-          href="/admin/users"
+          href={basePath}
           className="text-admin-sm font-medium text-body underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
         >
           Cancel

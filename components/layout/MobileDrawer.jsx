@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { X } from 'lucide-react'
 
 import Logo from '@/components/common/Logo'
+import { useAccount } from '@/components/auth/AccountProvider'
+import { AccountAvatar } from './AccountMenu'
 import { cn } from '@/utils/cn'
 
 /**
@@ -12,7 +14,24 @@ import { cn } from '@/utils/cn'
  * removed from the site on mobile — docs/responsive.md §4.1.
  * Traps focus, closes on Escape and backdrop click, restores focus on close.
  */
+const DRAWER_ITEM =
+  'flex min-h-11 items-center rounded-lg px-3 text-[15px] text-body transition-colors hover:text-gold'
+
 export default function MobileDrawer({ open, onClose, items, actions, activeHref }) {
+  const account = useAccount()
+  const signedIn = account.status === 'customer' || account.status === 'admin'
+
+  // The Account action expands to whatever fits the session.
+  const accountLinks = signedIn
+    ? [
+        { label: 'My account', href: '/account' },
+        ...(account.status === 'admin' ? [{ label: 'Admin dashboard', href: '/admin/dashboard' }] : []),
+      ]
+    : [
+        { label: 'Sign in', href: '/login' },
+        { label: 'Create account', href: '/register' },
+      ]
+
   const panelRef = useRef(null)
   const previouslyFocused = useRef(null)
 
@@ -110,18 +129,42 @@ export default function MobileDrawer({ open, onClose, items, actions, activeHref
             })}
           </ul>
 
-          <ul className="mt-6 flex flex-col gap-1 border-t border-border pt-6">
-            {actions.map((action) => (
+          {signedIn ? (
+            <div className="mt-6 flex items-center gap-3 border-t border-border px-3 pt-6">
+              <AccountAvatar account={account} size={36} />
+              <div className="min-w-0">
+                <p className="truncate text-[15px] font-bold text-ink">{account.name}</p>
+                <p className="truncate text-[13px] text-body">{account.email}</p>
+              </div>
+            </div>
+          ) : null}
+
+          <ul className={cn('flex flex-col gap-1', signedIn ? 'mt-3' : 'mt-6 border-t border-border pt-6')}>
+            {actions.flatMap((action) => (action.icon === 'user' ? accountLinks : [action])).map((action) => (
               <li key={action.href}>
                 <Link
                   href={action.href}
                   onClick={onClose}
-                  className="flex min-h-11 items-center rounded-lg px-3 text-[15px] text-body transition-colors hover:text-gold"
+                  className={DRAWER_ITEM}
                 >
                   {action.label}
                 </Link>
               </li>
             ))}
+            {signedIn ? (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose()
+                    account.signOut()
+                  }}
+                  className={cn(DRAWER_ITEM, 'w-full')}
+                >
+                  Sign out
+                </button>
+              </li>
+            ) : null}
           </ul>
         </nav>
       </div>

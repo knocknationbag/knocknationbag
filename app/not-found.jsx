@@ -2,14 +2,16 @@ import Link from 'next/link'
 
 import Container from '@/components/layout/Container'
 import Button from '@/components/ui/Button'
-import { categories } from '@/data/categories'
+import { getCategoryTree } from '@/lib/catalog'
 
 export const metadata = {
   title: 'Page not found',
   robots: { index: false, follow: true },
 }
 
-export default function NotFound() {
+export default async function NotFound() {
+  const categories = (await getCategoryTree()).slice(0, 10)
+
   return (
     <Container className="flex flex-col items-center py-20 text-center xl:py-32">
       <p className="font-mono text-eyebrow uppercase text-gold">Error 404</p>
@@ -23,8 +25,8 @@ export default function NotFound() {
       </h2>
 
       <p className="mt-4 max-w-[52ch] text-lead text-body">
-        The link may be out of date, or the piece may have sold out and been retired. The full
-        range is always one click away.
+        The link may be out of date, or the product may no longer be available. The full range is
+        always one click away.
       </p>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">

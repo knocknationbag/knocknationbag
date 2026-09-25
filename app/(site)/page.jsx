@@ -5,14 +5,12 @@ import ProductSection from '@/components/home/ProductSection'
 import FeatureSection from '@/components/home/FeatureSection'
 import NewArrivalsSection from '@/components/home/NewArrivalsSection'
 import PromoBanner from '@/components/home/PromoBanner'
-import ReviewSection from '@/components/home/ReviewSection'
 import InstagramSection from '@/components/home/InstagramSection'
 import NewsletterSection from '@/components/home/NewsletterSection'
 
-import { getByCollection } from '@/data/products'
-import { categories } from '@/data/categories'
+import { getCatalog, getCategoryTree, PLACEHOLDER_IMAGE } from '@/lib/catalog'
+import { sortProducts } from '@/utils/catalog'
 import { features } from '@/data/features'
-import { reviews } from '@/data/reviews'
 import { instagramPosts } from '@/data/instagram'
 import { site } from '@/constants/site'
 
@@ -22,15 +20,28 @@ export const metadata = {
   alternates: { canonical: '/' },
 }
 
+const absolute = (src) => (src?.startsWith('http') ? src : `${site.url}${src}`)
+
 /**
- * Home landing page. Server Component: it wires data to sections and does
- * nothing else (docs/architecture.md §9). Sections never import from data/.
+ * Home landing page. Server Component: it wires live catalogue data to the
+ * sections and does nothing else (docs/architecture.md §9).
+ *
+ * A section with nothing to show is left out rather than rendered empty — a
+ * new shop with no sale items simply has no Sale row.
  */
-export default function HomePage() {
-  const featured = getByCollection('featured')
-  const bestSellers = getByCollection('best-sellers')
-  const newFeatured = getByCollection('new-featured')
-  const newArrivals = getByCollection('new')
+export default async function HomePage() {
+  const [{ products }, tree] = await Promise.all([getCatalog(), getCategoryTree()])
+
+  const withPhoto = (list) => list.filter((p) => p.image !== PLACEHOLDER_IMAGE)
+  const featured = sortProducts(products.filter((p) => p.isFeatured), 'featured').slice(0, 8)
+  const onSale = products.filter((p) => p.discount > 0).slice(0, 8)
+  const newest = sortProducts(products, 'newest')
+  const newFeatured = withPhoto(newest).slice(0, 2)
+  const newArrivals = newest.filter((p) => !newFeatured.includes(p)).slice(0, 3)
+  const categories = tree
+    .filter((c) => c.productCount > 0)
+    .slice(0, 8)
+    .map(({ id, slug, title, image, imageAlt }) => ({ id, slug, title, image, imageAlt }))
 
   const itemList = {
     '@context': 'https://schema.org',
@@ -42,15 +53,13 @@ export default function HomePage() {
       item: {
         '@type': 'Product',
         name: product.title,
-        image: `${site.url}${product.image}`,
+        image: absolute(product.image),
         url: `${site.url}/product/${product.slug}`,
         offers: {
           '@type': 'Offer',
           price: product.price,
           priceCurrency: product.currency,
-          availability: product.inStock
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
+          availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         },
       },
     })),
@@ -58,30 +67,23 @@ export default function HomePage() {
 
   return (
     <>
-      <JsonLd data={itemList} />
+      {featured.length ? <JsonLd data={itemList} /> : null}
 
       <HeroSection />
-      <CategorySection categories={categories} />
+      {categories.length ? <CategorySection categories={categories} /> : null}
 
-      <ProductSection
-        eyebrow="ELEGANCE REFINED"
-        title="Featured Collection"
-        products={featured}
-        background="muted"
-      />
+      {featured.length ? (
+        <ProductSection eyebrow="ELEGANCE REFINED" title="Featured Collection" products={featured} background="muted" />
+      ) : null}
 
       <FeatureSection features={features} />
 
-      <ProductSection
-        eyebrow="ELITE FAVORITES"
-        title="Best Sellers"
-        products={bestSellers}
-        background="surface"
-      />
+      {onSale.length ? (
+        <ProductSection eyebrow="LIMITED REDUCTION" title="On Sale Now" products={onSale} background="surface" />
+      ) : null}
 
-      <NewArrivalsSection featured={newFeatured} products={newArrivals} />
+      {newest.length ? <NewArrivalsSection featured={newFeatured} products={newArrivals} /> : null}
       <PromoBanner />
-      <ReviewSection reviews={reviews} />
       <InstagramSection posts={instagramPosts} />
       <NewsletterSection />
     </>

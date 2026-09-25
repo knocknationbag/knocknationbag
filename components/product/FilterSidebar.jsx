@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { PRICE_RANGES } from '@/data/catalog'
+import { PRICE_RANGES } from '@/constants/catalog'
 import { buildQuery, toArray } from '@/utils/catalog'
 import { cn } from '@/utils/cn'
 

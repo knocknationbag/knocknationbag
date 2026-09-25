@@ -1,6 +1,5 @@
-import { products } from '@/data/products'
-import { categories } from '@/data/categories'
-import { collections } from '@/data/catalog'
+import { getCatalog } from '@/lib/catalog'
+import { COLLECTIONS } from '@/constants/catalog'
 import { policySlugs } from '@/data/content'
 import { site } from '@/constants/site'
 
@@ -8,8 +7,9 @@ import { site } from '@/constants/site'
  * XML sitemap at /sitemap.xml. Excludes cart, checkout, account, auth and
  * search — those are noindex (docs/seo.md §7).
  */
-export default function sitemap() {
-  const now = new Date('2025-01-15')
+export default async function sitemap() {
+  const now = new Date()
+  const { products, categories } = await getCatalog()
 
   const staticPages = [
     { path: '/', priority: 1.0, changeFrequency: 'daily' },
@@ -17,6 +17,7 @@ export default function sitemap() {
     { path: '/categories', priority: 0.8, changeFrequency: 'weekly' },
     { path: '/collections', priority: 0.8, changeFrequency: 'weekly' },
     { path: '/about', priority: 0.6, changeFrequency: 'monthly' },
+    { path: '/brand', priority: 0.4, changeFrequency: 'yearly' },
     { path: '/contact', priority: 0.6, changeFrequency: 'monthly' },
     { path: '/faq', priority: 0.6, changeFrequency: 'monthly' },
     { path: '/sitemap', priority: 0.3, changeFrequency: 'monthly' },
@@ -35,7 +36,7 @@ export default function sitemap() {
       changeFrequency: 'weekly',
       priority: 0.8,
     })),
-    ...collections.map((collection) => ({
+    ...COLLECTIONS.map((collection) => ({
       url: `${site.url}/collections/${collection.slug}`,
       lastModified: now,
       changeFrequency: 'weekly',
@@ -43,7 +44,7 @@ export default function sitemap() {
     })),
     ...products.map((product) => ({
       url: `${site.url}/product/${product.slug}`,
-      lastModified: now,
+      lastModified: new Date(product.createdAt),
       changeFrequency: 'weekly',
       priority: 0.7,
     })),

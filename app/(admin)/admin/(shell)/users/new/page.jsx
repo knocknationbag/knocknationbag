@@ -10,7 +10,7 @@ export default function NewUserPage() {
         title="Add user"
         description="Creates a sign-in account and its profile together. A temporary password is shown once, after saving."
       />
-      <UserForm />
+      <UserForm basePath="/admin/users" noun="user" />
     </>
   )
 }

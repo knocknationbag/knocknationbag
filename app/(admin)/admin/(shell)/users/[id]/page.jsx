@@ -29,7 +29,7 @@ export default async function EditUserPage({ params }) {
         title={user.name || user.email}
         description={`Account created ${formatAdminDate(user.createdAt)}.`}
       />
-      <UserForm user={user} />
+      <UserForm user={user} basePath="/admin/users" noun="user" />
     </>
   )
 }

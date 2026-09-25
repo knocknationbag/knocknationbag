@@ -1,11 +1,23 @@
 'use client'
 
 import AdminCard from '@/components/admin/ui/AdminCard'
-import AdminField from '@/components/admin/ui/AdminField'
-import { MediaPickerField } from '@/components/admin/media/MediaPicker'
+import AdminField, { AdminToggle } from '@/components/admin/ui/AdminField'
+import ImageUploadField from '@/components/admin/ui/ImageUploadField'
+import Repeater from '@/components/admin/ui/Repeater'
 import ProductGalleryField from './ProductGalleryField'
-import { PRODUCT_STATUSES, STOCK_STATUSES } from '@/constants/recordStatus'
+import ProductVariantsSection from './ProductVariantsSection'
+import { PRODUCT_STATUSES } from '@/constants/recordStatus'
 import { slugify } from '@/lib/admin/seo'
+import { formatPrice } from '@/utils/formatPrice'
+
+/** Top-level categories followed by their subcategories, for one <select>. */
+function categoryOptions(categories) {
+  const top = categories.filter((c) => !c.parentId)
+  return top.flatMap((parent) => [
+    { id: parent.id, label: parent.name },
+    ...categories.filter((c) => c.parentId === parent.id).map((child) => ({ id: child.id, label: `${parent.name} › ${child.name}` })),
+  ])
+}
 
 /**
  * The product editor's field groups.
@@ -44,14 +56,20 @@ export function BasicSection({ product, set, errors, categories = [], brands = [
           />
         </div>
 
-        <div className="grid gap-3.5 md:grid-cols-2">
+        <div className="grid gap-3.5 md:grid-cols-3">
+          <AdminField id="category" as="select" label="Category" value={product.categoryId ?? ''}
+            hint={categories.length ? 'Pick a subcategory when one fits.' : 'Create categories first, under Categories.'}
+            onChange={(e) => set({ categoryId: e.target.value })}>
+            <option value="">No category</option>
+            {categoryOptions(categories).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+          </AdminField>
+
           <AdminField id="brand" label="Brand" value={product.brand} list="brand-options"
-            placeholder="Knock Nation" onChange={(e) => set({ brand: e.target.value })} />
+            placeholder="Optional" onChange={(e) => set({ brand: e.target.value })} />
           <datalist id="brand-options">{brands.map((b) => <option key={b} value={b} />)}</datalist>
 
-          <AdminField id="category" label="Category" value={product.category} list="category-options"
-            placeholder="Duffles" onChange={(e) => set({ category: e.target.value })} />
-          <datalist id="category-options">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+          <AdminField id="material" label="Material" value={product.material ?? ''}
+            placeholder="e.g. Genuine leather" onChange={(e) => set({ material: e.target.value })} />
         </div>
 
         <AdminField
@@ -63,6 +81,18 @@ export function BasicSection({ product, set, errors, categories = [], brands = [
           id="description" as="textarea" rows={7} label="Full description"
           value={product.description} onChange={(e) => set({ description: e.target.value })}
         />
+
+        <Repeater
+          label="Product details"
+          hint="Shown as a table on the product page. Dimensions, weight and capacity help customers most."
+          rows={(product.specifications ?? []).map((spec, i) => ({ id: spec.id ?? `spec${i}`, key: spec.label, value: spec.value }))}
+          onChange={(rows) => set({ specifications: rows.map((row) => ({ id: row.id, label: row.key, value: row.value })) })}
+          keyLabel="Detail"
+          valueLabel="Value"
+          keyPlaceholder="Dimensions"
+          valuePlaceholder="45 × 30 × 15 cm"
+          addLabel="Add detail"
+        />
       </div>
     </AdminCard>
   )
@@ -71,7 +101,7 @@ export function BasicSection({ product, set, errors, categories = [], brands = [
 export function PricingSection({ product, set, errors }) {
   const price = Number(product.price) || 0
   const sale = product.salePrice === '' || product.salePrice === null ? null : Number(product.salePrice)
-  const cost = product.costPrice === '' || product.costPrice === null ? null : Number(product.costPrice)
+  const cost = product.costPrice === '' || product.costPrice === null || product.costPrice === undefined ? null : Number(product.costPrice)
   const effective = sale ?? price
   const margin = cost && effective ? Math.round(((effective - cost) / effective) * 100) : null
 
@@ -80,7 +110,8 @@ export function PricingSection({ product, set, errors }) {
   const saleTooHigh = sale !== null && !Number.isNaN(sale) && price > 0 && sale >= price
 
   return (
-    <AdminCard title="Pricing" description="Figures are in USD, in major units.">
+    <div className="flex flex-col gap-4">
+    <AdminCard title="Retail pricing" description="What every customer pays, in rupees.">
       <div className="flex flex-col gap-3.5">
         <div className="grid gap-3.5 md:grid-cols-3">
           <AdminField id="price" label="Price" type="number" min="0" step="0.01" required
@@ -90,7 +121,7 @@ export function PricingSection({ product, set, errors }) {
             error={errors.salePrice || (saleTooHigh ? 'The sale price must be lower than the regular price.' : undefined)}
             onChange={(e) => set({ salePrice: e.target.value })} />
           <AdminField id="cost-price" label="Cost price" type="number" min="0" step="0.01"
-            hint="Never shown publicly." value={product.costPrice ?? ''} error={errors.costPrice}
+            hint="Private. Only used to show your margin." value={product.costPrice ?? ''} error={errors.costPrice}
             onChange={(e) => set({ costPrice: e.target.value })} />
         </div>
 
@@ -102,34 +133,59 @@ export function PricingSection({ product, set, errors }) {
         ) : null}
       </div>
     </AdminCard>
+
+    <AdminCard
+      title="Wholesale pricing"
+      description="Optional. Only customers you mark as Approved Wholesale see this price, and only when they buy at least the minimum quantity."
+    >
+      <div className="grid gap-3.5 md:grid-cols-2">
+        <AdminField id="wholesale-price" label="Wholesale price (per unit)" type="number" min="0" step="0.01"
+          value={product.wholesalePrice ?? ''} error={errors.wholesalePrice}
+          hint={effective ? `Retail selling price is ${formatPrice(effective)}.` : undefined}
+          onChange={(e) => set({ wholesalePrice: e.target.value })} />
+        <AdminField id="wholesale-min" label="Minimum wholesale quantity" type="number" min="2" step="1"
+          value={product.wholesaleMinQty ?? ''} error={errors.wholesaleMinQty}
+          hint="Units per order before the wholesale price applies."
+          onChange={(e) => set({ wholesaleMinQty: e.target.value })} />
+      </div>
+    </AdminCard>
+    </div>
   )
 }
 
-export function InventorySection({ product, set, errors }) {
-  const low = Number(product.stock) <= Number(product.lowStockAlert)
+export function InventorySection({ product, set, errors, images = [] }) {
+  const variantTotal = (product.variants ?? []).filter((v) => v.isActive !== false).reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+  const stock = product.hasVariants ? variantTotal : Number(product.stock) || 0
+  const status = stock <= 0 ? 'Out of stock' : stock <= Number(product.lowStockAlert) ? 'Low stock' : 'In stock'
 
   return (
-    <AdminCard title="Inventory" description="Stock on hand and when to be warned about it.">
-      <div className="grid gap-3.5 md:grid-cols-3">
-        <AdminField id="stock" label="Stock quantity" type="number" min="0" step="1"
-          value={product.stock} error={errors.stock} onChange={(e) => set({ stock: e.target.value })} />
-        <AdminField id="stock-status" as="select" label="Stock status" value={product.stockStatus}
-          onChange={(e) => set({ stockStatus: e.target.value })}>
-          {STOCK_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </AdminField>
-        <AdminField id="low-stock" label="Low stock alert" type="number" min="0" step="1"
-          hint={low ? 'Stock is at or below this threshold.' : 'Warn when stock reaches this level.'}
-          value={product.lowStockAlert} onChange={(e) => set({ lowStockAlert: e.target.value })} />
-      </div>
-    </AdminCard>
+    <div className="flex flex-col gap-4">
+      <AdminCard title="Stock" description="Units you have ready to sell. Status updates automatically.">
+        <div className="grid gap-3.5 md:grid-cols-3">
+          {product.hasVariants ? (
+            <AdminField id="stock" label="Total stock" value={variantTotal} disabled
+              hint="Sum of the variants below." onChange={() => {}} />
+          ) : (
+            <AdminField id="stock" label="Stock quantity" type="number" min="0" step="1"
+              value={product.stock} error={errors.stock} onChange={(e) => set({ stock: e.target.value })} />
+          )}
+          <AdminField id="low-stock" label="Low stock alert" type="number" min="0" step="1"
+            hint="Flag as low stock at or below this number."
+            value={product.lowStockAlert} onChange={(e) => set({ lowStockAlert: e.target.value })} />
+          <AdminField id="stock-status" label="Status" value={status} disabled onChange={() => {}} />
+        </div>
+      </AdminCard>
+
+      <ProductVariantsSection product={product} set={set} error={errors.variants} images={images} />
+    </div>
   )
 }
 
 export function ImagesSection({ product, set }) {
   return (
     <div className="flex flex-col gap-4">
-      <AdminCard title="Featured image" description="The primary image, used on cards, search results and social previews.">
-        <MediaPickerField id="featured-image" label="Featured image"
+      <AdminCard title="Featured image" description="The main photo, used on product cards, search results and social previews.">
+        <ImageUploadField folder="products"
           value={product.featuredImage} onChange={(src) => set({ featuredImage: src })} />
       </AdminCard>
 
@@ -145,10 +201,13 @@ export function StatusSection({ product, set }) {
   return (
     <AdminCard title="Visibility">
       <AdminField id="status" as="select" label="Status" value={product.status}
-        hint="Only Published products are readable by the storefront."
+        hint="Only Published products appear in the shop."
         onChange={(e) => set({ status: e.target.value })}>
         {PRODUCT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
       </AdminField>
+      <AdminToggle id="featured" className="mt-4" label="Featured"
+        hint="Shown in the homepage Featured section."
+        checked={Boolean(product.isFeatured)} onChange={(isFeatured) => set({ isFeatured })} />
     </AdminCard>
   )
 }

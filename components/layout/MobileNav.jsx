@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Heart, Home, LayoutGrid, ShoppingBag, User } from 'lucide-react'
+import { Home, LayoutGrid, Search, ShoppingBag, User } from 'lucide-react'
 
 import { mobileNav } from '@/constants/navigation'
+import { useCart } from '@/components/cart/CartProvider'
 import { cn } from '@/utils/cn'
 
-const ICONS = { home: Home, grid: LayoutGrid, heart: Heart, bag: ShoppingBag, user: User }
+const ICONS = { home: Home, grid: LayoutGrid, search: Search, bag: ShoppingBag, user: User }
 
 /**
  * Floating bottom navigation. Mobile only — docs/responsive.md §4.12.
@@ -17,7 +18,8 @@ const ICONS = { home: Home, grid: LayoutGrid, heart: Heart, bag: ShoppingBag, us
  *
  * Carries the only permitted shadow in the design system (design.md §9).
  */
-export default function MobileNav({ cartCount = 3 }) {
+export default function MobileNav() {
+  const { count: cartCount } = useCart()
   const pathname = usePathname()
   const activeHref = pathname === '/' ? '/' : mobileNav.find((i) => i.href !== '/' && pathname.startsWith(i.href))?.href
 

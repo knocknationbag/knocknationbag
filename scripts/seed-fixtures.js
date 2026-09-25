@@ -267,6 +267,93 @@ const products = [
 
 const daysBefore = (now, days) => new Date(now - days * 86_400_000).toISOString()
 
+// ---------------------------------------------------------------------------
+// Phase 1 catalogue dummy data — categories, INR prices, details, variants and
+// wholesale offers. DUMMY DATA for development only; replace with real
+// products before launch.
+// ---------------------------------------------------------------------------
+
+/** Fixture prices were written in USD; convert to a plausible ₹ price ending in 99. */
+const inr = (usd) => (usd === null || usd === undefined ? null : Math.round((usd * 83) / 100) * 100 - 1)
+
+/** First matching rule wins, so the more specific patterns come first. */
+const CATEGORY_RULES = [
+  [/trolley|suitcase|cabin/i, 'trolley-bags'],
+  [/duffel|weekender/i, 'duffel-bags'],
+  [/gym/i, 'gym-bags'],
+  [/laptop/i, 'laptop-bags'],
+  [/school/i, 'school-bags'],
+  [/city backpack/i, 'college-bags'],
+  [/business|premium leather bag/i, 'office-bags'],
+  [/messenger|camera/i, 'messenger-bags'],
+  [/sling/i, 'sling-bags'],
+  [/crossbody/i, 'crossbody-bags'],
+  [/tote/i, 'tote-bags'],
+  [/backpack/i, 'backpacks'],
+  [/travel/i, 'travel-bags'],
+  [/handbag|top handle|clutch|flap|bucket|satchel/i, 'handbags'],
+]
+
+function categorySlugFor(product) {
+  return CATEGORY_RULES.find(([pattern]) => pattern.test(product.name))?.[1] ?? null
+}
+
+/** Demo photos for starting categories that have none (never overwrites one). */
+const CATEGORY_IMAGES = {
+  'travel-bags': '/images/categories/travel.webp',
+  'laptop-bags': '/images/categories/laptop.webp',
+  'office-bags': '/images/categories/office.webp',
+  backpacks: '/images/categories/backpack.webp',
+  'school-bags': '/images/categories/school.webp',
+  handbags: '/images/categories/women.webp',
+  'messenger-bags': '/images/categories/men.webp',
+}
+
+const MATERIAL_BY_BRAND = {
+  'KNB Atelier': 'Genuine leather',
+  'KNB Voyage': 'Polycarbonate shell & nylon',
+  'KNB Field': 'Water-resistant canvas',
+  'KNB Executive': 'Ballistic nylon with leather trim',
+}
+
+const SPECS_BY_CATEGORY = {
+  'trolley-bags': [['Dimensions', '55 × 38 × 23 cm'], ['Weight', '3.1 kg'], ['Capacity', '40 L'], ['Wheels', '4 spinner wheels']],
+  'duffel-bags': [['Dimensions', '55 × 30 × 27 cm'], ['Weight', '1.4 kg'], ['Capacity', '45 L']],
+  'laptop-bags': [['Dimensions', '42 × 30 × 10 cm'], ['Laptop fit', 'Up to 15.6"'], ['Weight', '0.9 kg']],
+  backpacks: [['Dimensions', '46 × 30 × 15 cm'], ['Capacity', '25 L'], ['Laptop fit', 'Up to 15.6"'], ['Weight', '0.8 kg']],
+  'school-bags': [['Dimensions', '44 × 32 × 18 cm'], ['Capacity', '28 L'], ['Weight', '0.7 kg']],
+}
+const DEFAULT_SPECS = [['Dimensions', '32 × 24 × 12 cm'], ['Weight', '0.6 kg']]
+
+/** Products shown in the homepage Featured section. */
+const FEATURED = ['Monarch Leather Backpack', 'Executive Office Laptop Bag', 'Apex Travel Duffel', 'Teal Structured Tote Bag', 'Atlas Cabin Trolley', 'Quantum 15-inch Laptop Backpack', 'Nova Crossbody Bag', 'Regent Premium Leather Bag']
+
+/** Two products with colour variants, to exercise the variant flow. */
+const VARIANTS = {
+  'Nova Crossbody Bag': [['Black', 14], ['Tan', 12], ['Olive', 0]],
+  'Onyx Lightweight Backpack': [['Black', 20], ['Charcoal', 9], ['Navy', 4]],
+}
+
+/** Wholesale offers on a few everyday lines: ~70% of retail, 10+ units. */
+const WHOLESALE = ['Cadet School Backpack', 'Onyx Lightweight Backpack', 'Navy City Backpack', 'Velocity Gym Bag', 'Summit Hiking Backpack']
+
+function catalogExtras(product) {
+  const categorySlug = categorySlugFor(product)
+  const retail = inr(product.salePrice ?? product.price)
+  return {
+    categorySlug,
+    variants: (VARIANTS[product.name] ?? []).map(([value, stock], index) => ({
+      option_name: 'Colour', value, stock, sort_order: index,
+      sku: `${product.name.split(' ')[0].toUpperCase()}-${value.slice(0, 3).toUpperCase()}`,
+    })),
+    trade: {
+      cost_price: Math.round(retail * 0.45),
+      wholesale_price: WHOLESALE.includes(product.name) ? Math.round((retail * 0.7) / 10) * 10 : null,
+      wholesale_min_qty: WHOLESALE.includes(product.name) ? 10 : null,
+    },
+  }
+}
+
 function stockStatusFor(stock) {
   if (stock === 0) return 'Out of stock'
   if (stock <= LOW_STOCK_ALERT) return 'Low stock'
@@ -319,10 +406,13 @@ function toProductRow(product, index, seo, now) {
     slug,
     sku: `KNB-${CATEGORY_SKU[product.category]}-${1000 + index + 1}`,
     brand: product.brand,
-    category: product.category,
+    material: MATERIAL_BY_BRAND[product.brand] ?? null,
     short_description: product.shortDescription,
-    price: product.price,
-    sale_price: product.salePrice,
+    description: `${product.shortDescription}\n\nDummy description for development — replace with the real product copy before launch.`,
+    specifications: (SPECS_BY_CATEGORY[categorySlugFor(product)] ?? DEFAULT_SPECS).map(([label, value]) => ({ label, value })),
+    is_featured: FEATURED.includes(product.name),
+    price: inr(product.price),
+    sale_price: inr(product.salePrice),
     stock: product.stock,
     stock_status: stockStatusFor(product.stock),
     low_stock_alert: LOW_STOCK_ALERT,
@@ -345,4 +435,4 @@ function toProductRow(product, index, seo, now) {
   }
 }
 
-module.exports = { users, products, toUserRow, toProductRow }
+module.exports = { users, products, toUserRow, toProductRow, catalogExtras, CATEGORY_IMAGES }

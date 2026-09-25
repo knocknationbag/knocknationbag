@@ -1,20 +1,46 @@
 import Link from 'next/link'
 
 import AuthShell from '@/components/common/AuthShell'
-import Field from '@/components/ui/Field'
-import Button from '@/components/ui/Button'
+import AuthDivider from '@/components/auth/AuthDivider'
+import GoogleButton from '@/components/auth/GoogleButton'
+import LoginForm from '@/components/auth/LoginForm'
+import { isSupabaseConfigured } from '@/lib/supabase/env'
+import { NOT_CONFIGURED_MESSAGE } from '@/lib/auth/authErrors'
+import { CUSTOMER_HOME, safeCustomerNextPath } from '@/lib/auth/customerRoutes'
 
 export const metadata = {
   title: 'Sign In',
-  description: 'Sign in to your Knock Nation Bag account to track orders and manage your wishlist.',
+  description: 'Sign in to your Knock Nation Bag account to track orders and check out faster.',
   robots: { index: false, follow: true },
 }
 
-export default function LoginPage() {
+// Reads ?next= / ?error= and is gated on the session by the proxy.
+export const dynamic = 'force-dynamic'
+
+/** `?error=` values set by /auth/callback and /auth/confirm. */
+const NOTICES = {
+  oauth_cancelled: { tone: 'info', text: 'Google sign-in was cancelled. Choose another way to sign in.' },
+  oauth_failed: { tone: 'error', text: 'We could not sign you in with Google. Please try again.' },
+  link_expired: {
+    tone: 'info',
+    text: 'That confirmation link has expired or was opened in a different browser. If you have already confirmed your email, sign in below.',
+  },
+}
+
+export default async function LoginPage({ searchParams }) {
+  const params = await searchParams
+  const next = safeCustomerNextPath(params?.next)
+  const nextField = next === CUSTOMER_HOME ? '' : next
+  const email = typeof params?.email === 'string' ? params.email.slice(0, 254) : ''
+
+  const notice = isSupabaseConfigured()
+    ? NOTICES[params?.error] ?? null
+    : { tone: 'error', text: NOT_CONFIGURED_MESSAGE }
+
   return (
     <AuthShell
       title="Welcome back"
-      description="Sign in to track orders, manage addresses and sync your wishlist across devices."
+      description="Sign in to track your orders and check out faster with saved details."
       footer={
         <>
           New here?{' '}
@@ -24,22 +50,11 @@ export default function LoginPage() {
         </>
       }
     >
-      <form className="flex flex-col gap-5">
-        <Field id="login-email" name="email" type="email" label="Email address" autoComplete="email" placeholder="you@example.com" />
-        <Field id="login-password" name="password" type="password" label="Password" autoComplete="current-password" placeholder="••••••••" />
-
-        <div className="flex items-center justify-between gap-4">
-          <label className="flex items-center gap-2.5 text-[14px] text-body">
-            <input type="checkbox" className="size-4 rounded-[4px] accent-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold" />
-            Keep me signed in
-          </label>
-          <Link href="/forgot-password" className="text-[14px] font-semibold text-gold underline-offset-4 hover:underline">
-            Forgot password?
-          </Link>
-        </div>
-
-        <Button type="submit" variant="primary" size="md" fullWidth>Sign in</Button>
-      </form>
+      <div className="flex flex-col gap-6">
+        <GoogleButton next={nextField} />
+        <AuthDivider label="or sign in with email" />
+        <LoginForm next={nextField} defaultEmail={email} notice={notice} />
+      </div>
     </AuthShell>
   )
 }

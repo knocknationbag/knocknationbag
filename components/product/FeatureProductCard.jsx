@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import Badge from '@/components/ui/Badge'
-import { formatPrice } from '@/utils/formatPrice'
+import { formatPrice, STORE_CURRENCY } from '@/utils/formatPrice'
 import { cn } from '@/utils/cn'
 
 const BADGES = {
@@ -21,7 +21,7 @@ export default function FeatureProductCard({
   title,
   slug,
   price,
-  currency = 'USD',
+  currency = STORE_CURRENCY,
   badge = null,
   priority = false,
   className,

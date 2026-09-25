@@ -1,4 +1,4 @@
-import { formatPrice } from '@/utils/formatPrice'
+import { formatPrice, STORE_CURRENCY } from '@/utils/formatPrice'
 import { cn } from '@/utils/cn'
 
 const SIZES = {
@@ -8,7 +8,7 @@ const SIZES = {
 }
 
 /** docs/components.md — struck-through old price is announced, not just styled. */
-export default function PriceTag({ price, oldPrice = null, currency = 'USD', size = 'md', className }) {
+export default function PriceTag({ price, oldPrice = null, currency = STORE_CURRENCY, size = 'md', className }) {
   return (
     <p className={cn('flex items-baseline gap-2 font-bold text-ink', SIZES[size], className)}>
       {oldPrice ? (

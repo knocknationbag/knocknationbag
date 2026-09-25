@@ -458,11 +458,13 @@ submissions, revalidation hooks. Never as a proxy to fetch your own data from a 
 6. Always `getUser()`, never `getSession()`, on the server — `getSession()` trusts the cookie
    without verifying it.
 7. Never render user-specific content in a statically generated page.
-8. Any redirect target that came from a URL must go through `safeNextPath()`.
+8. Any redirect target that came from a URL must go through `safeNextPath()` (admin) or
+   `safeCustomerNextPath()` (storefront).
 
-**Storefront customer accounts are not built.** `/login`, `/register` and `/forgot-password` are
-static Phase 2 pages with no auth behind them. When they are wired up, they get their own route
-group and reuse `lib/auth/*`; the admin screens under `/admin` stay separate.
+**Storefront customer accounts are built** on the same Supabase Auth — see
+[`admin.md` §9.1](./admin.md#91-storefront-customer-accounts). A customer is simply a signed-in user
+with no role; the dashboard stays closed to them by rule 5. The header learns the session from
+`/auth/session` after load, so storefront pages stay static — keep it that way (rule 7).
 
 ---
 
@@ -510,6 +512,9 @@ The one rule worth repeating: **admin and storefront share tokens, not component
 - [ ] Identical content renders at 390px, 1024px and 1920px
 - [ ] Keyboard-reachable, focus visible, `aria-label` on every icon-only control
 - [ ] Route exports `metadata`
+- [ ] Any database change is a **new** file in `supabase/migrations/` (`npm run db:new -- <name>`),
+      applied with `npm run db:migrate` — never a dashboard edit, never an edit to an applied
+      migration. See [`supabase/README.md`](../supabase/README.md)
 - [ ] `next build` clean, zero console errors or warnings
 - [ ] Pixel-diffed against the reference mockup
 

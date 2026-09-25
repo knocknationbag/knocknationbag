@@ -18,3 +18,12 @@ export function formatAdminDate(value) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '—' : FORMAT.format(date)
 }
+
+const MONTH_YEAR = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+
+/** "September 2026" — the storefront's "Member since" format. */
+export function formatMonthYear(value) {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : MONTH_YEAR.format(date)
+}

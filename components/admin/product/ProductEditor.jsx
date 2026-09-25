@@ -16,17 +16,17 @@ import { cn } from '@/utils/cn'
 const TABS = [
   { id: 'basic', label: 'Basic' },
   { id: 'pricing', label: 'Pricing' },
-  { id: 'inventory', label: 'Inventory' },
+  { id: 'inventory', label: 'Stock & variants' },
   { id: 'images', label: 'Images' },
   { id: 'seo', label: 'SEO' },
 ]
 
 const blank = () => ({
-  name: '', slug: '', sku: '', brand: '', category: '',
-  shortDescription: '', description: '',
-  price: '', salePrice: '', costPrice: '',
-  stock: 0, stockStatus: 'In stock', lowStockAlert: 5,
-  featuredImage: '', gallery: [],
+  name: '', slug: '', sku: '', brand: '', categoryId: '', material: '',
+  shortDescription: '', description: '', specifications: [],
+  price: '', salePrice: '', costPrice: '', wholesalePrice: '', wholesaleMinQty: '',
+  stock: 0, lowStockAlert: 5, hasVariants: false, optionName: 'Colour', variants: [],
+  featuredImage: '', gallery: [], isFeatured: false,
   seo: emptySeo(), status: 'Draft', slugLocked: false,
 })
 
@@ -64,8 +64,8 @@ export default function ProductEditor({ product = null, categories = [], brands 
   })
 
   const firstErrorTab = errors.name || errors.slug || errors.sku ? 'basic'
-    : errors.price || errors.salePrice ? 'pricing'
-      : errors.stock ? 'inventory' : null
+    : errors.price || errors.salePrice || errors.costPrice || errors.wholesalePrice || errors.wholesaleMinQty ? 'pricing'
+      : errors.stock || errors.variants ? 'inventory' : null
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -106,7 +106,9 @@ export default function ProductEditor({ product = null, categories = [], brands 
       ) : null}
 
       {tab === 'pricing' ? <PricingSection product={draft} set={set} errors={errors} /> : null}
-      {tab === 'inventory' ? <InventorySection product={draft} set={set} errors={errors} /> : null}
+      {tab === 'inventory' ? (
+        <InventorySection product={draft} set={set} errors={errors} images={[draft.featuredImage, ...draft.gallery].filter(Boolean)} />
+      ) : null}
       {tab === 'images' ? <ImagesSection product={draft} set={set} /> : null}
 
       {tab === 'seo' ? (

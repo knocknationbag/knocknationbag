@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { SearchX } from 'lucide-react'
 
 import Container from '@/components/layout/Container'
@@ -5,10 +6,8 @@ import PageHeader from '@/components/common/PageHeader'
 import ProductGrid from '@/components/product/ProductGrid'
 import EmptyState from '@/components/ui/EmptyState'
 import SearchField from '@/components/common/SearchField'
-import { products } from '@/data/products'
+import { getCatalog, getCategoryTree } from '@/lib/catalog'
 import { searchProducts } from '@/utils/catalog'
-import { categories } from '@/data/categories'
-import Link from 'next/link'
 
 export const metadata = {
   title: 'Search',
@@ -18,7 +17,7 @@ export const metadata = {
 }
 
 export default async function SearchPage({ searchParams }) {
-  const { q = '' } = await searchParams
+  const [{ q = '' }, { products }, tree] = await Promise.all([searchParams, getCatalog(), getCategoryTree()])
   const query = String(q).trim()
   const results = query ? searchProducts(products, query) : []
 
@@ -30,7 +29,7 @@ export default async function SearchPage({ searchParams }) {
         description={
           query
             ? `${results.length} ${results.length === 1 ? 'product matches' : 'products match'} your search.`
-            : 'Search the full range by product name, category, colour or material.'
+            : 'Search by product name, category, colour or material.'
         }
         breadcrumbs={[{ label: 'Search' }]}
       >
@@ -49,7 +48,7 @@ export default async function SearchPage({ searchParams }) {
           <EmptyState
             icon={SearchX}
             title={`Nothing matches “${query}”`}
-            description="Try a broader term, or browse by category — the range is only 28 pieces, so it is quick to scan."
+            description="Try a broader term, or browse by category."
             actionLabel="Shop all bags"
             actionHref="/shop"
             secondaryLabel="Browse categories"
@@ -59,7 +58,7 @@ export default async function SearchPage({ searchParams }) {
           <div>
             <p className="font-mono text-eyebrow uppercase text-gold">Browse by category</p>
             <ul className="mt-4 flex flex-wrap gap-2">
-              {categories.map((category) => (
+              {tree.map((category) => (
                 <li key={category.slug}>
                   <Link
                     href={`/category/${category.slug}`}

@@ -6,17 +6,34 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Search, X } from 'lucide-react'
 
-import { products } from '@/data/products'
-import { searchProducts } from '@/utils/catalog'
 import { formatPrice } from '@/utils/formatPrice'
 
-const SUGGESTIONS = ['Leather tote', 'Carry-on', 'Laptop backpack', 'Weekender', 'Crossbody']
-
-/** Full-screen search with live suggestions. Escape closes, Enter goes to /search. */
+/**
+ * Full-screen search with live suggestions from /api/search (the live
+ * catalogue). Escape closes, Enter goes to the full /search results page.
+ */
 export default function SearchOverlay({ open, onClose }) {
   const [query, setQuery] = useState('')
+  const [data, setData] = useState({ categories: [], products: [], for: null })
   const inputRef = useRef(null)
   const router = useRouter()
+
+  // Debounced so typing does not fire a request per keystroke.
+  useEffect(() => {
+    if (!open) return undefined
+    const term = query.trim()
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal: controller.signal })
+        .then((response) => (response.ok ? response.json() : { categories: [], products: [] }))
+        .then((json) => setData({ ...json, for: term }))
+        .catch(() => {})
+    }, term ? 200 : 0)
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [open, query])
 
   useEffect(() => {
     if (!open) return undefined
@@ -32,7 +49,8 @@ export default function SearchOverlay({ open, onClose }) {
 
   if (!open) return null
 
-  const results = searchProducts(products, query).slice(0, 6)
+  const results = data.for === query.trim() ? data.products : []
+  const searching = query.trim() && data.for !== query.trim()
 
   function submit(event) {
     event.preventDefault()
@@ -72,21 +90,23 @@ export default function SearchOverlay({ open, onClose }) {
           <div className="max-h-[60vh] overflow-y-auto p-5">
             {!query ? (
               <>
-                <p className="font-mono text-eyebrow uppercase text-gold">Popular searches</p>
+                <p className="font-mono text-eyebrow uppercase text-gold">Browse categories</p>
                 <ul className="mt-4 flex flex-wrap gap-2">
-                  {SUGGESTIONS.map((s) => (
-                    <li key={s}>
-                      <button
-                        type="button"
-                        onClick={() => setQuery(s)}
-                        className="rounded-full border border-border px-4 py-2 text-[14px] text-ink transition-colors hover:border-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                  {data.categories.map((c) => (
+                    <li key={c.slug}>
+                      <Link
+                        href={`/category/${c.slug}`}
+                        onClick={onClose}
+                        className="inline-block rounded-full border border-border px-4 py-2 text-[14px] text-ink transition-colors hover:border-border-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                       >
-                        {s}
-                      </button>
+                        {c.title}
+                      </Link>
                     </li>
                   ))}
                 </ul>
               </>
+            ) : searching ? (
+              <p className="py-6 text-center text-[15px] text-body">Searching…</p>
             ) : results.length === 0 ? (
               <p className="py-6 text-center text-[15px] text-body">
                 No products match “{query}”. Try a broader term.
@@ -105,7 +125,7 @@ export default function SearchOverlay({ open, onClose }) {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[15px] font-bold text-ink">{p.title}</span>
-                        <span className="block text-[13px] text-body">{p.brand}</span>
+                        <span className="block text-[13px] text-body">{p.subtitle}</span>
                       </span>
                       <span className="text-[15px] font-bold text-ink">{formatPrice(p.price)}</span>
                     </Link>

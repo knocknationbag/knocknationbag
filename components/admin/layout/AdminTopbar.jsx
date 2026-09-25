@@ -18,12 +18,12 @@ export default function AdminTopbar({ onOpenSidebar, user }) {
   const pathname = usePathname()
   const current = findAdminNavItem(pathname)
 
-  // /admin/products/new -> ['Products', 'New']
+  // /admin/products/new -> ['Products', 'New']; a record id reads as "Edit".
   const tail = pathname
     .replace(current?.href ?? ADMIN_HOME, '')
     .split('/')
     .filter(Boolean)
-    .map((s) => s.replace(/-/g, ' '))
+    .map((s) => (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(s) ? 'Edit' : s.replace(/-/g, ' ')))
 
   return (
     <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface/95 px-3 backdrop-blur md:px-4">

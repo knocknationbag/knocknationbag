@@ -5,7 +5,7 @@ import Badge from '@/components/ui/Badge'
 import PriceTag from './PriceTag'
 import QuickAddButton from './QuickAddButton'
 import Rating from './Rating'
-import WishlistButton from './WishlistButton'
+import { STORE_CURRENCY } from '@/utils/formatPrice'
 import { cn } from '@/utils/cn'
 
 const BADGES = {
@@ -16,10 +16,10 @@ const BADGES = {
 const DEFAULT_SIZES = '(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw'
 
 /**
- * The most reused component in the project — Home, Category, Search, Wishlist,
- * Related, Recently viewed. docs/components.md#productcard.
+ * The most reused component in the project — Home, Category, Search, Collections,
+ * Related products. docs/components.md#productcard.
  *
- * Stays a Server Component: only WishlistButton and QuickAddButton are clients.
+ * Stays a Server Component: only QuickAddButton is a client.
  * The title link is stretched over the card so the accessible name is the product
  * name, while the two controls sit above it — docs/accessibility.md §9.
  */
@@ -30,9 +30,12 @@ export default function ProductCard({
   slug,
   price,
   oldPrice = null,
-  currency = 'USD',
+  currency = STORE_CURRENCY,
   rating = null,
   badge = null,
+  inStock = true,
+  variants = [],
+  id,
   priority = false,
   sizes = DEFAULT_SIZES,
   className,
@@ -68,11 +71,9 @@ export default function ProductCard({
           </Badge>
         ) : null}
 
-        <WishlistButton
-          productId={slug}
-          title={title}
-          className="absolute right-[7px] top-[7px] z-20"
-        />
+        {inStock ? null : (
+          <Badge variant="neutral" className="absolute right-3 top-3 z-20">Sold out</Badge>
+        )}
       </div>
 
       {rating !== null ? <Rating value={rating} className="mt-4 xl:mt-6" /> : null}
@@ -93,7 +94,14 @@ export default function ProductCard({
           rather than overflowing the viewport. */}
       <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-3 pt-3 xl:pt-4">
         <PriceTag price={price} oldPrice={oldPrice} currency={currency} />
-        <QuickAddButton productId={slug} title={title} className="relative z-20" />
+        <QuickAddButton
+          productId={id}
+          slug={slug}
+          title={title}
+          hasVariants={variants.length > 0}
+          inStock={inStock}
+          className="relative z-20"
+        />
       </div>
     </article>
   )

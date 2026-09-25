@@ -3,24 +3,27 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Heart, Menu, Search, ShoppingBag, User } from 'lucide-react'
+import { Menu, Search, ShoppingBag } from 'lucide-react'
 
 import Logo from '@/components/common/Logo'
+import AccountMenu from './AccountMenu'
+import { useCart } from '@/components/cart/CartProvider'
 import MobileDrawer from './MobileDrawer'
 import MegaMenu from './MegaMenu'
 import SearchOverlay from './SearchOverlay'
 import Container from './Container'
-import { headerActions, headerNav, megaMenus } from '@/constants/navigation'
+import { headerActions, headerNav } from '@/constants/navigation'
 import { cn } from '@/utils/cn'
-
-const ACTION_ICONS = { heart: Heart, user: User }
 
 /**
  * docs/design.md §11 — 80px desktop/tablet, 56px mobile, sticky, hairline border.
  * Client because it owns the drawer, mega-menu and search overlay state.
  * Mega panels open on hover and on keyboard focus (group-focus-within).
+ * `menus` comes from the storefront layout, built from live categories; a nav
+ * item whose menu is missing (e.g. the database is unreachable) is a plain link.
  */
-export default function Header({ cartCount = 3 }) {
+export default function Header({ menus = {} }) {
+  const { count: cartCount } = useCart()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
@@ -49,7 +52,7 @@ export default function Header({ cartCount = 3 }) {
           <nav aria-label="Primary" className="hidden md:block">
             <ul className="flex items-center gap-5 xl:gap-7">
               {headerNav.map((item) => {
-                const menu = item.mega ? megaMenus[item.mega] : null
+                const menu = item.mega ? menus[item.mega] ?? null : null
                 return (
                   <li key={item.href} className={cn(menu && 'group static')}>
                     <Link
@@ -84,19 +87,9 @@ export default function Header({ cartCount = 3 }) {
               <Search size={22} strokeWidth={2} aria-hidden="true" />
             </button>
 
-            {headerActions.map((action) => {
-              const Icon = ACTION_ICONS[action.icon]
-              return (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  aria-label={action.label}
-                  className="hidden size-11 place-items-center rounded-full text-ink transition-colors duration-150 ease-out hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold md:grid"
-                >
-                  <Icon size={22} strokeWidth={2} aria-hidden="true" />
-                </Link>
-              )
-            })}
+            {/* The account slot follows the session: sign-in when signed out,
+                the account menu when signed in. */}
+            <AccountMenu className="hidden md:grid" />
 
             <Link
               href="/cart"
@@ -104,12 +97,14 @@ export default function Header({ cartCount = 3 }) {
               className="relative grid size-11 place-items-center rounded-full text-ink transition-colors duration-150 ease-out hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
             >
               <ShoppingBag size={22} strokeWidth={2} aria-hidden="true" />
-              <span
-                aria-hidden="true"
-                className="absolute right-1 top-1 grid size-[18px] place-items-center rounded-full bg-gold text-[11px] font-bold leading-none text-ink"
-              >
-                {cartCount}
-              </span>
+              {cartCount > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-1 top-1 grid size-[18px] place-items-center rounded-full bg-gold text-[11px] font-bold leading-none text-ink"
+                >
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              ) : null}
             </Link>
           </div>
         </Container>

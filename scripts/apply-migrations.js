@@ -1,154 +1,212 @@
 #!/usr/bin/env node
 /**
- * Applies supabase/migrations/*.sql over a direct Postgres connection.
+ * Applies pending supabase/migrations/*.sql files and records each one.
  *
- *   SUPABASE_DB_URL="postgresql://..." node scripts/apply-migrations.js
+ *   node scripts/apply-migrations.js                  apply pending migrations
+ *   node scripts/apply-migrations.js --status         list applied / pending, change nothing
+ *   node scripts/apply-migrations.js --mark-applied <version> [...]
+ *                                                     record as applied WITHOUT running
  *
- * The service-role key cannot do this: PostgREST speaks tables and functions,
- * not DDL. Creating schema needs a real database connection, which is why this
- * is the one script that wants a connection string rather than an API key.
+ * The connection string comes from SUPABASE_DB_URL — see db-connection.js.
  *
- * The URL is read from the environment, never from a file and never from argv —
- * argv is visible to every process on the machine via the process list. It is
- * not logged, and the summary below prints only the host.
+ * History lives in supabase_migrations.schema_migrations, the table the
+ * Supabase CLI uses, so `supabase migration list` / `supabase db push` agree
+ * with this script if the project is ever linked with the CLI.
  *
- * Files run in filename order, each in its own transaction: a migration that
- * fails halfway leaves nothing behind rather than a half-built schema. The
- * migrations are written to be idempotent (`create ... if not exists`, `drop
- * policy if exists`), so re-running this is safe.
+ * Each migration runs in its own transaction together with its history row:
+ * either the schema change and its record both land, or neither does. An
+ * applied migration is never run again, so migrations do not have to be
+ * idempotent — but they must never be edited once applied. Change the schema
+ * with a new file (`npm run db:new -- <name>`).
+ *
+ * --mark-applied exists for one case: a migration whose changes are already in
+ * the database (applied by hand, or before history was tracked). It records the
+ * version without executing anything. Check with `npm run db:inspect` first.
  */
 
 const fs = require('node:fs')
 const path = require('node:path')
-const { Client } = require('pg')
 
-const MIGRATIONS_DIR = path.join(process.cwd(), 'supabase', 'migrations')
-
+const { connectToProjectDatabase } = require('./db-connection')
 const { report } = require('./service-client')
 
-function migrationFiles() {
+const MIGRATIONS_DIR = path.join(process.cwd(), 'supabase', 'migrations')
+const FILE_PATTERN = /^(\d{14})_([a-z0-9_]+)\.sql$/
+
+function localMigrations() {
   if (!fs.existsSync(MIGRATIONS_DIR)) throw new Error(`No such directory: ${MIGRATIONS_DIR}`)
 
-  // Filenames are timestamp-prefixed, so a plain sort is dependency order —
-  // products depends on set_updated_at() and is_admin() from profiles.
-  return fs
-    .readdirSync(MIGRATIONS_DIR)
-    .filter((file) => file.endsWith('.sql'))
-    .sort()
+  const files = fs.readdirSync(MIGRATIONS_DIR).filter((file) => file.endsWith('.sql'))
+  const malformed = files.filter((file) => !FILE_PATTERN.test(file))
+  if (malformed.length) {
+    throw new Error(`Migration filenames must be <14-digit timestamp>_<snake_name>.sql: ${malformed.join(', ')}`)
+  }
+
+  // Timestamp-prefixed, so a plain sort is dependency order.
+  return files.sort().map((file) => {
+    const [, version, name] = file.match(FILE_PATTERN)
+    return { version, name, file, sql: fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8') }
+  })
 }
 
 /**
- * Supabase's pooler presents a certificate that does not chain to the system
- * roots on every machine. Verification is tried first and only relaxed if that
- * is the reason the connection failed — so a real network or auth problem is
- * never silently retried into a weaker connection.
+ * Same shape the Supabase CLI creates. The CLI adds further nullable columns
+ * of its own with `add column if not exists`, so creating the base here does
+ * not conflict with it.
  */
-async function connect(connectionString) {
-  const attempt = async (ssl) => {
-    const client = new Client({ connectionString, ssl })
-    await client.connect()
-    return client
-  }
-
-  try {
-    return { client: await attempt({ rejectUnauthorized: true }), verified: true }
-  } catch (error) {
-    const isCertificateProblem =
-      /self[- ]signed|unable to verify|certificate/i.test(error.message) ||
-      String(error.code).startsWith('SELF_SIGNED') ||
-      String(error.code).startsWith('UNABLE_TO_')
-
-    if (!isCertificateProblem) throw error
-    return { client: await attempt({ rejectUnauthorized: false }), verified: false }
-  }
+async function ensureHistoryTable(client) {
+  await client.query(`
+    create schema if not exists supabase_migrations;
+    create table if not exists supabase_migrations.schema_migrations (version text primary key);
+    alter table supabase_migrations.schema_migrations add column if not exists statements text[];
+    alter table supabase_migrations.schema_migrations add column if not exists name text;
+  `)
 }
 
-/** What the migrations were supposed to build, read back from the catalogue. */
-async function inspect(client) {
-  const tables = await client.query(`
-    select c.relname as table,
-           c.relrowsecurity as rls,
-           (select count(*) from pg_policy p where p.polrelid = c.oid) as policies,
-           (select count(*) from pg_index i where i.indrelid = c.oid) as indexes
-    from pg_class c
-    join pg_namespace n on n.oid = c.relnamespace
-    where n.nspname = 'public' and c.relkind = 'r'
-    order by c.relname
-  `)
+/** Applied versions, or null when history has never been recorded. */
+async function appliedMigrations(client) {
+  const { rows: exists } = await client.query(
+    `select to_regclass('supabase_migrations.schema_migrations') is not null as present`,
+  )
+  if (!exists[0].present) return null
 
-  const functions = await client.query(`
-    select p.proname as name
-    from pg_proc p
-    join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public'
-    order by p.proname
-  `)
+  const { rows } = await client.query(
+    'select version, name, statements from supabase_migrations.schema_migrations order by version',
+  )
+  return new Map(rows.map((row) => [row.version, row]))
+}
 
-  const triggers = await client.query(`
-    select t.tgname as name, c.relname as table, n.nspname as schema
-    from pg_trigger t
-    join pg_class c on c.oid = t.tgrelid
-    join pg_namespace n on n.oid = c.relnamespace
-    where not t.tgisinternal and n.nspname in ('public', 'auth')
-    order by n.nspname, c.relname, t.tgname
+async function hasUserTables(client) {
+  const { rows } = await client.query(`
+    select exists (
+      select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind in ('r', 'p')
+    ) as present
   `)
+  return rows[0].present
+}
 
-  return { tables: tables.rows, functions: functions.rows, triggers: triggers.rows }
+/**
+ * This script stores the whole file as one statement, so an applied file can
+ * be checked for later edits. Rows written by the CLI hold split statements
+ * and are not compared.
+ */
+function editedSinceApplied(local, row) {
+  const statements = row.statements || []
+  return statements.length === 1 && statements[0] !== local.sql
+}
+
+function statusLines(locals, applied) {
+  const lines = []
+  for (const local of locals) {
+    const row = applied?.get(local.version)
+    const state = !row ? 'pending' : editedSinceApplied(local, row) ? 'applied — FILE EDITED SINCE' : 'applied'
+    lines.push(`    ${local.file.padEnd(44)} ${state}`)
+  }
+  const localVersions = new Set(locals.map((local) => local.version))
+  for (const [version, row] of applied || []) {
+    if (!localVersions.has(version)) lines.push(`    ${`${version}_${row.name || '?'}`.padEnd(44)} in database, NO LOCAL FILE`)
+  }
+  return lines
+}
+
+async function applyPending(client, locals, applied) {
+  const pending = locals.filter((local) => !applied.has(local.version))
+  if (!pending.length) {
+    console.log('Nothing to apply — the database is up to date.')
+    return []
+  }
+
+  const done = []
+  for (const local of pending) {
+    process.stdout.write(`  ${local.file} ... `)
+    await client.query('begin')
+    try {
+      await client.query(local.sql)
+      await client.query(
+        'insert into supabase_migrations.schema_migrations (version, name, statements) values ($1, $2, $3)',
+        [local.version, local.name, [local.sql]],
+      )
+      await client.query('commit')
+    } catch (error) {
+      await client.query('rollback')
+      console.log('failed')
+      throw new Error(`${local.file} failed and was rolled back: ${error.message}`)
+    }
+    console.log('ok')
+    done.push(local.file)
+  }
+  return done
+}
+
+async function markApplied(client, locals, applied, versions) {
+  if (!versions.length) throw new Error('--mark-applied needs at least one migration version.')
+
+  const byVersion = new Map(locals.map((local) => [local.version, local]))
+  const unknown = versions.filter((version) => !byVersion.has(version))
+  if (unknown.length) throw new Error(`No local migration file for: ${unknown.join(', ')}`)
+
+  const marked = []
+  await client.query('begin')
+  try {
+    for (const version of versions) {
+      if (applied.has(version)) continue
+      const local = byVersion.get(version)
+      await client.query(
+        'insert into supabase_migrations.schema_migrations (version, name, statements) values ($1, $2, $3)',
+        [local.version, local.name, [local.sql]],
+      )
+      marked.push(local.file)
+    }
+    await client.query('commit')
+  } catch (error) {
+    await client.query('rollback')
+    throw error
+  }
+  return marked
 }
 
 async function main() {
-  const connectionString = (process.env.SUPABASE_DB_URL || '').trim()
-  if (!connectionString) {
-    throw new Error('Set SUPABASE_DB_URL to the Supabase connection string before running this.')
-  }
+  const args = process.argv.slice(2)
+  const mode = args.includes('--status') ? 'status' : args.includes('--mark-applied') ? 'mark' : 'apply'
 
-  const files = migrationFiles()
-  if (!files.length) throw new Error(`No .sql files in ${MIGRATIONS_DIR}`)
+  const locals = localMigrations()
+  if (!locals.length) throw new Error(`No .sql files in ${MIGRATIONS_DIR}`)
 
-  const { host } = new URL(connectionString)
-  console.log(`Target database: ${host}`)
-
-  const { client, verified } = await connect(connectionString)
-  if (!verified) {
-    console.warn('Note: the server certificate could not be verified against the system roots.')
-  }
-
-  const applied = []
+  const client = await connectToProjectDatabase()
   try {
-    for (const file of files) {
-      const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8')
-      process.stdout.write(`  ${file} ... `)
-
-      await client.query('begin')
-      try {
-        await client.query(sql)
-        await client.query('commit')
-      } catch (error) {
-        await client.query('rollback')
-        throw new Error(`${file} failed and was rolled back: ${error.message}`)
-      }
-
-      console.log('ok')
-      applied.push(file)
+    if (mode === 'status') {
+      const applied = await appliedMigrations(client)
+      report([
+        applied ? '  Migration history' : '  Migration history — not recorded yet (no history table)',
+        '',
+        ...statusLines(locals, applied),
+      ])
+      return
     }
 
-    const { tables, functions, triggers } = await inspect(client)
+    const before = await appliedMigrations(client)
+    if (mode === 'apply' && !before?.size && (await hasUserTables(client))) {
+      throw new Error(
+        'The database already has tables in public but no migration history. Applying now would re-run ' +
+          'migrations that are already live. Verify with `npm run db:inspect`, then record them with ' +
+          '`node scripts/apply-migrations.js --mark-applied <version> ...`.',
+      )
+    }
 
-    report([
-      '  Migrations applied',
-      '',
-      ...applied.map((file) => `    ${file}`),
-      '',
-      '  Tables in public',
-      ...tables.map(
-        (row) =>
-          `    ${row.table.padEnd(10)} RLS ${row.rls ? 'on ' : 'off'}  ` +
-          `${String(row.policies).padStart(2)} policies  ${String(row.indexes).padStart(2)} indexes`,
-      ),
-      '',
-      `  Functions   ${functions.map((row) => row.name).join(', ') || '(none)'}`,
-      ...triggers.map((row) => `  Trigger     ${row.schema}.${row.table} -> ${row.name}`),
-    ])
+    await ensureHistoryTable(client)
+    let applied = await appliedMigrations(client)
+
+    if (mode === 'mark') {
+      const versions = args.filter((arg) => !arg.startsWith('--'))
+      const marked = await markApplied(client, locals, applied, versions)
+      console.log(marked.length ? `Recorded without running: ${marked.join(', ')}` : 'Already recorded.')
+    } else {
+      await applyPending(client, locals, applied)
+    }
+
+    applied = await appliedMigrations(client)
+    report(['  Migration history', '', ...statusLines(locals, applied)])
   } finally {
     await client.end()
   }

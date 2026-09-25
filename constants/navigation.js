@@ -7,96 +7,19 @@
 export const headerNav = [
   { label: 'Home', href: '/' },
   { label: 'Shop', href: '/shop', mega: 'shop' },
-  { label: 'Men', href: '/category/men' },
-  { label: 'Women', href: '/category/women' },
-  { label: 'Travel', href: '/category/travel' },
-  { label: 'Backpacks', href: '/category/backpack' },
-  { label: 'Collections', href: '/collections', mega: 'collections' },
+  { label: 'Categories', href: '/categories' },
+  { label: 'New Arrivals', href: '/collections/new-arrivals' },
+  { label: 'Sale', href: '/collections/sale' },
   { label: 'About', href: '/about' },
 ]
 
-/** Panels rendered by MegaMenu when a nav item declares `mega`. */
-export const megaMenus = {
-  shop: {
-    columns: [
-      {
-        heading: 'Shop by category',
-        links: [
-          { label: 'Men', href: '/category/men' },
-          { label: 'Women', href: '/category/women' },
-          { label: 'Travel', href: '/category/travel' },
-          { label: 'Backpacks', href: '/category/backpack' },
-        ],
-      },
-      {
-        heading: 'Work & study',
-        links: [
-          { label: 'Laptop Bags', href: '/category/laptop' },
-          { label: 'Office Bags', href: '/category/office' },
-          { label: 'School Bags', href: '/category/school' },
-          { label: 'Accessories', href: '/category/accessories' },
-        ],
-      },
-      {
-        heading: 'Browse',
-        links: [
-          { label: 'All products', href: '/shop' },
-          { label: 'All categories', href: '/categories' },
-          { label: 'Sale', href: '/collections/sale' },
-          { label: 'Search', href: '/search' },
-        ],
-      },
-    ],
-    feature: {
-      href: '/collections/new-arrivals',
-      image: '/images/products/aero-shell-suitcase.webp',
-      imageAlt: 'Aero Shell Suitcase bronze hardshell case on a marble plinth',
-      eyebrow: 'THE CUTTING EDGE',
-      title: 'New Arrivals',
-    },
-  },
-  collections: {
-    columns: [
-      {
-        heading: 'Curated edits',
-        links: [
-          { label: 'New Arrivals', href: '/collections/new-arrivals' },
-          { label: 'Best Sellers', href: '/collections/best-sellers' },
-          { label: 'Featured Collection', href: '/collections/featured' },
-          { label: 'Sale', href: '/collections/sale' },
-        ],
-      },
-      {
-        heading: 'Product lines',
-        links: [
-          { label: 'KNB Atelier', href: '/shop?brand=KNB+Atelier' },
-          { label: 'KNB Voyage', href: '/shop?brand=KNB+Voyage' },
-          { label: 'KNB Field', href: '/shop?brand=KNB+Field' },
-          { label: 'KNB Executive', href: '/shop?brand=KNB+Executive' },
-        ],
-      },
-      {
-        heading: 'The brand',
-        links: [
-          { label: 'About us', href: '/about' },
-          { label: 'Contact', href: '/contact' },
-          { label: 'Warranty', href: '/warranty' },
-          { label: 'FAQ', href: '/faq' },
-        ],
-      },
-    ],
-    feature: {
-      href: '/collections/best-sellers',
-      image: '/images/products/executive-messenger.webp',
-      imageAlt: 'Executive Messenger black leather satchel with brass buckles',
-      eyebrow: 'ELITE FAVORITES',
-      title: 'Best Sellers',
-    },
-  },
-}
+/**
+ * The Shop mega menu is built from live categories in the storefront layout
+ * (lib/catalog/navigation.js) — categories are managed in the dashboard, so a
+ * hard-coded list here would go stale the first time the owner edits one.
+ */
 
 export const headerActions = [
-  { label: 'Wishlist', href: '/wishlist', icon: 'heart' },
   { label: 'Account', href: '/account', icon: 'user' },
 ]
 
@@ -106,8 +29,9 @@ export const footerColumns = [
     links: [
       { label: 'Shop', href: '/shop' },
       { label: 'New Arrivals', href: '/collections/new-arrivals' },
-      { label: 'Best Sellers', href: '/collections/best-sellers' },
+      { label: 'Sale', href: '/collections/sale' },
       { label: 'Collections', href: '/collections' },
+      { label: 'Brand', href: '/brand' },
     ],
   },
   {
@@ -134,7 +58,7 @@ export const footerColumns = [
 export const mobileNav = [
   { label: 'Home', href: '/', icon: 'home' },
   { label: 'Categories', href: '/categories', icon: 'grid' },
-  { label: 'Wishlist', href: '/wishlist', icon: 'heart' },
+  { label: 'Search', href: '/search', icon: 'search' },
   { label: 'Cart', href: '/cart', icon: 'bag' },
   { label: 'Profile', href: '/account', icon: 'user' },
 ]
