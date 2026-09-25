@@ -3,7 +3,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CATALOG_TAG } from '@/lib/supabase/public'
-import { verifyWebhookSignature } from '@/lib/payments/razorpay'
+import { isWebhookConfigured, verifyWebhookSignature } from '@/lib/payments/razorpay'
 
 /**
  * Razorpay webhook — the safety net for payments the browser never reported
@@ -26,6 +26,13 @@ async function findOrder(admin, column, value) {
 }
 
 export async function POST(request) {
+  // A missing secret is a deployment mistake, not a bad request: answer 503 so
+  // it shows up in Razorpay's webhook log instead of looking like forgery.
+  if (!isWebhookConfigured()) {
+    console.error('Razorpay webhook received but RAZORPAY_WEBHOOK_SECRET is not set.')
+    return NextResponse.json({ error: 'webhook not configured' }, { status: 503 })
+  }
+
   const raw = await request.text()
   if (!verifyWebhookSignature(raw, request.headers.get('x-razorpay-signature'))) {
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 })

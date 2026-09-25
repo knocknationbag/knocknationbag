@@ -7,6 +7,7 @@ import SectionHeader from '@/components/common/SectionHeader'
 import CartLineItem from '@/components/common/CartLineItem'
 import OrderSummary from '@/components/common/OrderSummary'
 import EmptyState from '@/components/ui/EmptyState'
+import AuthNotice from '@/components/auth/AuthNotice'
 import ProductGrid from '@/components/product/ProductGrid'
 import { loadCart } from '@/lib/cart'
 import { getCatalog } from '@/lib/catalog'
@@ -37,7 +38,9 @@ export default async function CartPage() {
       />
 
       <Container className="py-10 md:py-14 xl:py-16">
-        {cart.lines.length === 0 ? (
+        {cart.loadError ? (
+          <AuthNotice tone="error">We could not load your cart just now. Please refresh the page in a moment.</AuthNotice>
+        ) : cart.lines.length === 0 ? (
           <EmptyState
             icon={ShoppingBag}
             title="Your cart is empty"
