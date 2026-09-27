@@ -3,14 +3,14 @@ import { cn } from '@/utils/cn'
 
 const SIZES = {
   sm: 'text-card-title',
-  md: 'text-card-price md:text-card-price-md xl:text-card-price-xl',
+  md: 'text-card-price-compact md:text-card-price-md xl:text-card-price-xl',
   lg: 'text-card-price-xl',
 }
 
 /** docs/components.md — struck-through old price is announced, not just styled. */
 export default function PriceTag({ price, oldPrice = null, currency = STORE_CURRENCY, size = 'md', className }) {
   return (
-    <p className={cn('flex items-baseline gap-2 font-bold text-ink', SIZES[size], className)}>
+    <p className={cn('flex flex-wrap items-baseline gap-x-2 font-bold text-ink', SIZES[size], className)}>
       {oldPrice ? (
         <s className="text-[0.7em] font-medium text-muted" aria-label={`Was ${formatPrice(oldPrice, currency)}`}>
           {formatPrice(oldPrice, currency)}

@@ -114,7 +114,13 @@ export default async function ProductPage({ params }) {
 
       <Container className="pb-12 md:pb-16 xl:pb-20">
         <VariantSelectionProvider initialVariantId={(product.variants.find((v) => v.inStock) ?? product.variants[0])?.id ?? null}>
-        <div className="grid gap-8 md:grid-cols-2 md:gap-10 xl:gap-16">
+        {/* grid-cols-1 (minmax(0, 1fr)) on mobile: without an explicit track the
+            single column is `auto` and grows to its widest item's min-content —
+            the whole thumbnail row — pushing the page wider than the screen.
+            md:items-start: each column is as tall as its own content; stretched,
+            the gallery grew to the info column's height and its image box showed
+            an empty band under the photo. */}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start md:gap-10 xl:gap-16">
           <ProductGallery
             images={product.gallery}
             variants={product.variants}
@@ -128,7 +134,7 @@ export default async function ProductPage({ params }) {
             }
           />
 
-          <div>
+          <div className="min-w-0 wrap-break-word">
             {product.brand ? <p className="font-mono text-eyebrow uppercase text-gold">{product.brand}</p> : null}
             <h1 className="mt-3 text-h2 font-extrabold text-ink md:text-h2-md xl:text-h2-xl">{product.title}</h1>
 
@@ -163,7 +169,7 @@ export default async function ProductPage({ params }) {
         </VariantSelectionProvider>
 
         <Tabs
-          className="mt-14 xl:mt-20"
+          className="mt-14 min-w-0 wrap-break-word xl:mt-20"
           tabs={[
             {
               id: 'description',

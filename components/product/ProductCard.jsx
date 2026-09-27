@@ -45,7 +45,7 @@ export default function ProductCard({
   return (
     <article
       className={cn(
-        'group relative flex flex-col rounded-card border border-border bg-surface p-3 xl:p-4',
+        'group relative flex flex-col rounded-card border border-border bg-surface p-2.5 md:p-3 xl:p-4',
         'transition-colors duration-200 ease-out hover:border-border-hover',
         className,
       )}
@@ -78,7 +78,7 @@ export default function ProductCard({
 
       {rating !== null ? <Rating value={rating} className="mt-4 xl:mt-6" /> : null}
 
-      <h3 className="mt-3 font-bold text-ink text-card-title md:text-card-title-md xl:mt-4 xl:text-card-title-xl">
+      <h3 className="mt-2.5 font-bold text-ink text-card-title-compact md:mt-3 md:text-card-title-md xl:mt-4 xl:text-card-title-xl">
         <Link
           href={`/product/${slug}`}
           className="after:absolute after:inset-0 after:z-10 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
@@ -91,8 +91,9 @@ export default function ProductCard({
           card does not push its price out of line with its neighbours.
           flex-wrap because at 390px a 2-up card is 149px inside, which cannot fit
           the price and the "Quick Add" pill on one line — the button drops below
-          rather than overflowing the viewport. */}
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-3 pt-3 xl:pt-4">
+          rather than overflowing the viewport. Phones get the compact type steps
+          and a full-width button on its own row. */}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-2 md:gap-y-3 md:pt-3 xl:pt-4">
         <PriceTag price={price} oldPrice={oldPrice} currency={currency} />
         <QuickAddButton
           productId={id}
@@ -100,7 +101,7 @@ export default function ProductCard({
           title={title}
           hasVariants={variants.length > 0}
           inStock={inStock}
-          className="relative z-20"
+          className="relative z-20 w-full px-3 text-btn-compact md:w-auto md:px-4 md:text-btn-sm"
         />
       </div>
     </article>

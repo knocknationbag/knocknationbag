@@ -19,9 +19,9 @@ const FONT_SIZES = [
   'banner', 'banner-md', 'banner-xl',
   'eyebrow',
   'lead', 'lead-md', 'lead-xl',
-  'card-title', 'card-title-md', 'card-title-xl',
-  'card-price', 'card-price-md', 'card-price-xl',
-  'nav', 'btn', 'btn-sm', 'micro',
+  'card-title', 'card-title-md', 'card-title-xl', 'card-title-compact',
+  'card-price', 'card-price-md', 'card-price-xl', 'card-price-compact',
+  'nav', 'btn', 'btn-sm', 'btn-compact', 'micro',
   'footer-heading', 'footer-link',
   // admin dashboard scale
   'admin-xs', 'admin-sm', 'admin', 'admin-md', 'admin-lg',
