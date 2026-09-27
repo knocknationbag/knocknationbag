@@ -6,6 +6,7 @@ import PageHeader from '@/components/common/PageHeader'
 import SectionHeader from '@/components/common/SectionHeader'
 import CartLineItem from '@/components/common/CartLineItem'
 import OrderSummary from '@/components/common/OrderSummary'
+import CouponForm from '@/components/cart/CouponForm'
 import EmptyState from '@/components/ui/EmptyState'
 import AuthNotice from '@/components/auth/AuthNotice'
 import ProductGrid from '@/components/product/ProductGrid'
@@ -68,6 +69,7 @@ export default async function CartPage() {
               ctaDisabled={!cart.canCheckout}
               className="h-fit"
             >
+              <CouponForm coupon={cart.coupon} className="mt-6 border-t border-border pt-6" />
               {hasProblem ? (
                 <p role="alert" className="mt-4 text-[14px] font-semibold text-danger">
                   Please fix the highlighted items before checking out.

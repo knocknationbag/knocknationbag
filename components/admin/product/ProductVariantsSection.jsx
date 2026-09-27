@@ -6,12 +6,14 @@ import AdminCard from '@/components/admin/ui/AdminCard'
 import AdminButton from '@/components/admin/ui/AdminButton'
 import AdminField, { AdminToggle } from '@/components/admin/ui/AdminField'
 import AuthMessage from '@/components/admin/auth/AuthMessage'
+import VariantImagesField from './VariantImagesField'
 
-const newVariant = () => ({ key: `new-${Date.now()}-${Math.random()}`, value: '', sku: '', price: '', salePrice: '', stock: 0, imageUrl: '', isActive: true })
+const newVariant = () => ({ key: `new-${Date.now()}-${Math.random()}`, value: '', sku: '', price: '', salePrice: '', stock: 0, images: [], isActive: true })
 
 /**
  * Optional variants — one option per product (usually Colour), each with its
- * own stock and SKU, and an optional price that overrides the product's.
+ * own stock and SKU, an optional price that overrides the product's, and its
+ * own photos (shown on the product page when that colour is chosen).
  *
  * Off by default: most bags are sold as one item, and they keep the simple
  * form. Switching it on hides the single stock field (the total becomes the
@@ -55,8 +57,8 @@ export default function ProductVariantsSection({ product, set, error, images = [
 
             <ul className="flex flex-col gap-3">
               {variants.map((variant, index) => (
-                <li key={keyOf(variant)} className="rounded-media border border-border p-3">
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.3fr_1fr_0.8fr_0.8fr_0.7fr_1fr_auto] xl:items-end">
+                <li key={keyOf(variant)} className="flex flex-col gap-3 rounded-media border border-border p-3">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1.3fr_1fr_0.8fr_0.8fr_0.7fr_auto] xl:items-end">
                     <AdminField id={`v-value-${index}`} label={product.optionName || 'Option'} value={variant.value}
                       placeholder="Black" onChange={(e) => update(variant, { value: e.target.value })} />
                     <AdminField id={`v-sku-${index}`} label="SKU" value={variant.sku ?? ''} placeholder="Optional"
@@ -69,14 +71,16 @@ export default function ProductVariantsSection({ product, set, error, images = [
                       onChange={(e) => update(variant, { salePrice: e.target.value })} />
                     <AdminField id={`v-stock-${index}`} label="Stock" type="number" min="0" step="1"
                       value={variant.stock} onChange={(e) => update(variant, { stock: e.target.value })} />
-                    <AdminField id={`v-image-${index}`} as="select" label="Photo" value={variant.imageUrl ?? ''}
-                      onChange={(e) => update(variant, { imageUrl: e.target.value })}>
-                      <option value="">Main photo</option>
-                      {images.map((src, i) => <option key={src} value={src}>Image {i + 1}</option>)}
-                    </AdminField>
                     <AdminButton size="sm" variant="ghost" icon={Trash2} iconOnly aria-label={`Remove variant ${variant.value || index + 1}`}
                       className="hover:text-danger" onClick={() => set({ variants: variants.filter((v) => keyOf(v) !== keyOf(variant)) })} />
                   </div>
+                  <VariantImagesField
+                    id={`v-images-${index}`}
+                    label={`${variant.value || `${product.optionName || 'Option'} ${index + 1}`} photos`}
+                    images={variant.images ?? (variant.imageUrl ? [variant.imageUrl] : [])}
+                    productImages={images}
+                    onChange={(next) => update(variant, { images: next })}
+                  />
                 </li>
               ))}
             </ul>
@@ -85,7 +89,7 @@ export default function ProductVariantsSection({ product, set, error, images = [
               <AdminButton size="sm" icon={Plus} onClick={() => set({ variants: [...variants, newVariant()] })}>
                 Add variant
               </AdminButton>
-              <p className="text-admin-xs text-muted">Leave Price blank to use the product price. Photos come from the Images tab.</p>
+              <p className="text-admin-xs text-muted">Leave Price blank to use the product price. Each option can have its own photos.</p>
             </div>
           </>
         ) : null}

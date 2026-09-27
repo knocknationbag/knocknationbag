@@ -1,9 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { FileText } from 'lucide-react'
 
 import Badge from '@/components/ui/Badge'
 import OrderSummary from '@/components/common/OrderSummary'
 import PayNowButton from '@/components/checkout/PayNowButton'
+import OrderReturns from './OrderReturns'
 import { ORDER_STATUS_HELP, ORDER_STATUS_TONE, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '@/constants/orders'
 import { formatAddress } from '@/lib/checkout/validation'
 import { formatPrice } from '@/utils/formatPrice'
@@ -20,9 +22,10 @@ function Block({ title, children }) {
 
 /**
  * A placed order as the customer sees it — used by the confirmation page and
- * the account order page, so both always show the same thing.
+ * the account order page, so both always show the same thing. `owner` (how
+ * the server verifies the order is theirs) enables the Return Order form.
  */
-export default function OrderDetails({ order }) {
+export default function OrderDetails({ order, returns = [], owner = null }) {
   const address = order.shippingAddress ?? {}
 
   return (
@@ -33,6 +36,12 @@ export default function OrderDetails({ order }) {
             {order.awaitingOnlinePayment ? 'Awaiting payment' : order.status}
           </Badge>
           <p className="text-[15px] text-body">{order.awaitingOnlinePayment ? 'Pay to confirm your order.' : ORDER_STATUS_HELP[order.status]}</p>
+          {order.hasBill ? (
+            <Link href={`/invoice/${order.accessToken}`}
+              className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink underline underline-offset-4 hover:text-gold sm:ml-auto">
+              <FileText size={16} aria-hidden="true" /> View / print bill
+            </Link>
+          ) : null}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -86,6 +95,8 @@ export default function OrderDetails({ order }) {
             ))}
           </ul>
         </section>
+
+        {owner ? <OrderReturns order={order} returns={returns} owner={owner} /> : null}
 
         {order.note ? (
           <Block title="Your note">

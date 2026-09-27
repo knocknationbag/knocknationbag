@@ -123,6 +123,7 @@ export const MODULE_PERMISSION = {
   '/admin/brands': P.CATALOG_VIEW,
   '/admin/inventory': P.INVENTORY_EDIT,
   '/admin/orders': P.ORDERS_VIEW,
+  '/admin/returns': P.ORDERS_VIEW,
   '/admin/customers': P.CUSTOMERS_VIEW,
   '/admin/reviews': P.CONTENT_VIEW,
   '/admin/coupons': P.ORDERS_EDIT,

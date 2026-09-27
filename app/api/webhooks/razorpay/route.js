@@ -17,12 +17,30 @@ import { isWebhookConfigured, verifyWebhookSignature } from '@/lib/payments/razo
  *
  * Configure in Razorpay Dashboard → Webhooks: URL <site>/api/webhooks/razorpay,
  * events payment.captured, order.paid, payment.failed, refund.processed.
+ * (refund.failed is handled too if it is ever subscribed.)
  */
 
 async function findOrder(admin, column, value) {
   if (!value) return null
   const { data } = await admin.from('orders').select('id, order_number, total, razorpay_payment_id').eq(column, value).maybeSingle()
   return data
+}
+
+/**
+ * The refunds row a Razorpay refund belongs to: by its Razorpay id, else by
+ * the ids we put in its notes (lib/payments/refunds.js) — the latter covers a
+ * refund whose API answer was lost before its id was stored.
+ */
+async function findReturnRefund(admin, refund) {
+  if (!refund?.id) return null
+  const byId = await admin.from('refunds').select('id').eq('razorpay_refund_id', refund.id).maybeSingle()
+  if (byId.data) return byId.data.id
+  const returnId = refund.notes?.knb_return_id
+  if (!returnId) return null
+  const live = await admin.from('refunds').select('id').eq('return_id', returnId).eq('status', 'pending').is('razorpay_refund_id', null).maybeSingle()
+  if (live.data) return live.data.id
+  const tagged = await admin.from('refunds').select('id, status').eq('id', refund.notes?.knb_refund_id ?? '00000000-0000-0000-0000-000000000000').maybeSingle()
+  return tagged.data && tagged.data.status !== 'failed' ? tagged.data.id : null
 }
 
 export async function POST(request) {
@@ -66,11 +84,23 @@ export async function POST(request) {
       }
       case 'refund.processed': {
         const refund = event?.payload?.refund?.entity
+        // A refund started from a return: close it out (idempotent).
+        const ours = await findReturnRefund(admin, refund)
+        if (ours) {
+          const { error } = await admin.rpc('record_refund_result', { p_refund_id: ours, p_status: 'processed', p_razorpay_refund_id: refund.id })
+          if (error) throw new Error(error.message)
+        }
         const order = await findOrder(admin, 'razorpay_payment_id', refund?.payment_id)
         // A full refund marks the order refunded; partial refunds leave it paid.
         if (order && Number(refund.amount) >= Math.round(Number(order.total) * 100)) {
           await admin.rpc('mark_order_refunded', { p_order_id: order.id })
         }
+        break
+      }
+      case 'refund.failed': {
+        const refund = event?.payload?.refund?.entity
+        const ours = await findReturnRefund(admin, refund)
+        if (ours) await admin.rpc('record_refund_result', { p_refund_id: ours, p_status: 'failed', p_razorpay_refund_id: refund.id, p_failure_reason: 'Razorpay reported the refund as failed.' })
         break
       }
       default:

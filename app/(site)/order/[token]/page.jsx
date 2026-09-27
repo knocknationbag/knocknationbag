@@ -5,6 +5,7 @@ import Container from '@/components/layout/Container'
 import Button from '@/components/ui/Button'
 import OrderDetails from '@/components/orders/OrderDetails'
 import { getOrderByToken } from '@/lib/db/orders'
+import { listReturnsForVerifiedOrder } from '@/lib/db/returns'
 import { getAccount } from '@/lib/auth/account'
 
 export const metadata = {
@@ -23,6 +24,8 @@ export default async function OrderConfirmationPage({ params }) {
   const { token } = await params
   const [order, account] = await Promise.all([getOrderByToken(token), getAccount()])
   if (!order) notFound()
+  // The token in the URL is the proof of ownership (it found the order).
+  const returns = await listReturnsForVerifiedOrder(order.id)
 
   const signedIn = account.status !== 'guest'
   const unpaid = order.awaitingOnlinePayment
@@ -52,7 +55,7 @@ export default async function OrderConfirmationPage({ params }) {
       </div>
 
       <div className="mt-12">
-        <OrderDetails order={order} />
+        <OrderDetails order={order} returns={returns} owner={{ accessToken: order.accessToken }} />
       </div>
     </Container>
   )

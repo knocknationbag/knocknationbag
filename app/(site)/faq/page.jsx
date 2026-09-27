@@ -8,7 +8,7 @@ import { faqs } from '@/data/content'
 export const metadata = {
   title: 'Frequently Asked Questions',
   description:
-    'Answers on delivery times, returns, the three-year warranty, leather care and monogramming.',
+    'Answers on delivery across India, payment, returns and refunds, warranty, custom and wholesale orders.',
   alternates: { canonical: '/faq' },
   openGraph: { title: 'FAQ | Knock Nation Bag', url: '/faq' },
 }
@@ -33,7 +33,7 @@ export default function FaqPage() {
       <PageHeader
         eyebrow="EVERYTHING ANSWERED"
         title="Frequently Asked Questions"
-        description="Delivery, returns, warranty and care — the questions we are asked most, answered properly."
+        description="Delivery, payment, returns, warranty and orders — the questions we are asked most."
         breadcrumbs={[{ label: 'FAQ' }]}
       />
 

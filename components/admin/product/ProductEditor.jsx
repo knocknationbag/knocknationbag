@@ -65,7 +65,9 @@ export default function ProductEditor({ product = null, categories = [], brands 
 
   const firstErrorTab = errors.name || errors.slug || errors.sku ? 'basic'
     : errors.price || errors.salePrice || errors.costPrice || errors.wholesalePrice || errors.wholesaleMinQty ? 'pricing'
-      : errors.stock || errors.variants ? 'inventory' : null
+      : errors.stock || errors.variants ? 'inventory'
+        : Object.keys(errors).some((key) => key.startsWith('seo_')) ? 'seo' : null
+  const seoErrors = Object.entries(errors).filter(([key]) => key.startsWith('seo_')).map(([, message]) => message)
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -111,6 +113,7 @@ export default function ProductEditor({ product = null, categories = [], brands 
       ) : null}
       {tab === 'images' ? <ImagesSection product={draft} set={set} /> : null}
 
+      {tab === 'seo' && seoErrors.length ? <AuthMessage tone="error">{seoErrors.join(' ')}</AuthMessage> : null}
       {tab === 'seo' ? (
         <SeoPanel
           value={{ ...seo, canonical: seo.canonical, altText: seo.altText || draft.name }}

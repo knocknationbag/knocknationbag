@@ -49,6 +49,19 @@ export const STATUS_TONE = {
   Featured: 'gold',
   NoIndex: 'danger',
   Index: 'success',
+  // Coupons
+  Disabled: 'muted',
+  Expired: 'danger',
+  // Returns and refunds
+  Requested: 'warning',
+  'Under Review': 'warning',
+  'Awaiting Return': 'gold',
+  'Return Received': 'gold',
+  'Inspection Passed': 'success',
+  'Inspection Failed': 'danger',
+  'Refund Pending': 'warning',
+  Closed: 'muted',
+  Processed: 'success',
 }
 
 export default function StatusBadge({ status, tone, className }) {

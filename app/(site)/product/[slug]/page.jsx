@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import Link from 'next/link'
 import { Banknote, ShieldCheck, Truck } from 'lucide-react'
 
@@ -12,8 +12,9 @@ import Tabs from '@/components/ui/Tabs'
 import ProductGallery from '@/components/product/ProductGallery'
 import ProductGrid from '@/components/product/ProductGrid'
 import ProductPurchase from '@/components/product/ProductPurchase'
+import { VariantSelectionProvider } from '@/components/product/VariantSelection'
 import WholesaleOffer from '@/components/product/WholesaleOffer'
-import { getCatalog, getCategoryBySlug, getProductBySlug, getRelatedProducts } from '@/lib/catalog'
+import { getCatalog, getCategoryBySlug, getProductBySlug, getProductRedirect, getRelatedProducts } from '@/lib/catalog'
 import { site } from '@/constants/site'
 
 /** Only what has been decided for V1 — no invented delivery times or return windows. */
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
+    ...(product.seo.keywords.length ? { keywords: product.seo.keywords } : {}),
     alternates: { canonical: product.seo.canonical || `/product/${slug}` },
     robots: product.seo.robots?.startsWith('noindex') ? { index: false, follow: true } : undefined,
     openGraph: {
@@ -59,7 +61,12 @@ export async function generateMetadata({ params }) {
 export default async function ProductPage({ params }) {
   const { slug } = await params
   const product = await getProductBySlug(slug)
-  if (!product) notFound()
+  if (!product) {
+    // A renamed product: send the old URL to the new one, permanently.
+    const moved = await getProductRedirect(slug)
+    if (moved) permanentRedirect(`/product/${moved}`)
+    notFound()
+  }
 
   const [category, related] = await Promise.all([
     product.category ? getCategoryBySlug(product.category) : null,
@@ -100,15 +107,17 @@ export default async function ProductPage({ params }) {
             { label: 'Shop', href: '/shop' },
             ...(category?.parent ? [{ label: category.parent.title, href: `/category/${category.parent.slug}` }] : []),
             ...(category ? [{ label: category.title, href: `/category/${category.slug}` }] : []),
-            { label: product.title },
+            { label: product.seo.breadcrumbTitle || product.title },
           ]}
         />
       </Container>
 
       <Container className="pb-12 md:pb-16 xl:pb-20">
+        <VariantSelectionProvider initialVariantId={(product.variants.find((v) => v.inStock) ?? product.variants[0])?.id ?? null}>
         <div className="grid gap-8 md:grid-cols-2 md:gap-10 xl:gap-16">
           <ProductGallery
             images={product.gallery}
+            variants={product.variants}
             alt={product.imageAlt}
             badge={
               product.discount > 0 ? (
@@ -151,6 +160,7 @@ export default async function ProductPage({ params }) {
             </ul>
           </div>
         </div>
+        </VariantSelectionProvider>
 
         <Tabs
           className="mt-14 xl:mt-20"

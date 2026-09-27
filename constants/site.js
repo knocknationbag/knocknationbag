@@ -13,6 +13,25 @@ export const site = {
   copyrightYear: 2025,
 }
 
+/**
+ * The shop's contact details, exactly as supplied by the client. Used by the
+ * contact page, policy pages, the customer bill and the shipping label.
+ */
+export const store = {
+  name: 'Knock Nation Bag',
+  email: 'knocknationbag@gmail.com',
+  addressLines: [
+    'Shop No. 14, Mominpura Kalapani,',
+    'Near Ahley Hadies Masjid, Opp. Maulana Azad High School,',
+    'Municipal Colony, Byculla West, Byculla,',
+    'Mumbai, Maharashtra 400011.',
+  ],
+  address:
+    'Shop No. 14, Mominpura Kalapani, Near Ahley Hadies Masjid, Opp. Maulana Azad High School, ' +
+    'Municipal Colony, Byculla West, Byculla, Mumbai, Maharashtra 400011.',
+  careHours: { days: 'Monday to Saturday', hours: '10:00 AM to 8:00 PM' },
+}
+
 export const socialLinks = [
   { label: 'Instagram', href: 'https://instagram.com/knocknationbag', icon: 'instagram' },
   { label: 'Facebook', href: 'https://facebook.com/knocknationbag', icon: 'facebook' },

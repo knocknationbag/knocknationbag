@@ -4,6 +4,7 @@ import Container from '@/components/layout/Container'
 import PageHeader from '@/components/common/PageHeader'
 import OrderDetails from '@/components/orders/OrderDetails'
 import { getMyOrder } from '@/lib/db/orders'
+import { listMyReturnsForOrder } from '@/lib/db/returns'
 import { getAccount } from '@/lib/auth/account'
 import { customerLoginUrlFor } from '@/lib/auth/customerRoutes'
 
@@ -18,6 +19,7 @@ export default async function AccountOrderPage({ params }) {
 
   const order = await getMyOrder(number)
   if (!order) notFound()
+  const returns = await listMyReturnsForOrder(order.id)
 
   return (
     <>
@@ -27,7 +29,7 @@ export default async function AccountOrderPage({ params }) {
         breadcrumbs={[{ label: 'My Account', href: '/account' }, { label: order.number }]}
       />
       <Container className="py-10 md:py-14 xl:py-16">
-        <OrderDetails order={order} />
+        <OrderDetails order={order} returns={returns} owner={{ orderNumber: order.number }} />
       </Container>
     </>
   )

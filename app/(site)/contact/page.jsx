@@ -4,11 +4,12 @@ import Container from '@/components/layout/Container'
 import PageHeader from '@/components/common/PageHeader'
 import ContactForm from '@/components/common/ContactForm'
 import { contactChannels } from '@/data/content'
+import { store } from '@/constants/site'
 
 export const metadata = {
   title: 'Contact Us',
   description:
-    'Reach the Knock Nation Bag customer care team. Every message answered within one working day.',
+    'Contact Knock Nation Bag by email or visit our shop in Byculla, Mumbai. Care hours Monday to Saturday, 10:00 AM to 8:00 PM.',
   alternates: { canonical: '/contact' },
   openGraph: { title: 'Contact Us | Knock Nation Bag', url: '/contact' },
 }
@@ -17,9 +18,9 @@ export default function ContactPage() {
   return (
     <>
       <PageHeader
-        eyebrow="WE ANSWER PROPERLY"
+        eyebrow="GET IN TOUCH"
         title="Contact Us"
-        description="A real person replies to every message within one working day. No queue numbers, no chatbots."
+        description={`Email us at ${store.email}, or visit our shop in Byculla, Mumbai.`}
         breadcrumbs={[{ label: 'Contact' }]}
       />
 
@@ -39,7 +40,7 @@ export default function ContactPage() {
           <aside className="flex flex-col gap-4">
             <div className="rounded-card border border-border bg-surface-muted p-6">
               <h2 className="flex items-center gap-2 text-[17px] font-bold text-ink">
-                <Mail size={18} className="text-gold" aria-hidden="true" /> Direct channels
+                <Mail size={18} className="text-gold" aria-hidden="true" /> Contact us
               </h2>
               <dl className="mt-4 flex flex-col gap-4">
                 {contactChannels.map((channel) => (
@@ -63,21 +64,18 @@ export default function ContactPage() {
                 <Clock size={18} className="text-gold" aria-hidden="true" /> Care hours
               </h2>
               <p className="mt-3 text-[15px] leading-[26px] text-body">
-                Monday to Friday, 9am – 6pm ET<br />
-                Saturday, 10am – 4pm ET<br />
-                Closed Sundays and public holidays
+                {store.careHours.days}:<br />
+                {store.careHours.hours}
               </p>
             </div>
 
             <div className="rounded-card border border-border bg-surface-muted p-6">
               <h2 className="flex items-center gap-2 text-[17px] font-bold text-ink">
-                <MapPin size={18} className="text-gold" aria-hidden="true" /> Workshop
+                <MapPin size={18} className="text-gold" aria-hidden="true" /> Store address
               </h2>
-              <p className="mt-3 text-[15px] leading-[26px] text-body">
-                Rua da Prata 148<br />
-                1100-052 Lisboa<br />
-                Portugal
-              </p>
+              <address className="mt-3 text-[15px] not-italic leading-[26px] text-body">
+                {store.addressLines.map((line) => <span key={line} className="block">{line}</span>)}
+              </address>
             </div>
           </aside>
         </div>

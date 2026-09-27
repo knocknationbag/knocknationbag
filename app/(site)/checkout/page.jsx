@@ -4,6 +4,7 @@ import Container from '@/components/layout/Container'
 import Breadcrumb from '@/components/common/Breadcrumb'
 import CartLineItem from '@/components/common/CartLineItem'
 import OrderSummary from '@/components/common/OrderSummary'
+import CouponForm from '@/components/cart/CouponForm'
 import CheckoutForm from '@/components/checkout/CheckoutForm'
 import { loadCart } from '@/lib/cart'
 import { createClient } from '@/lib/supabase/server'
@@ -56,6 +57,7 @@ export default async function CheckoutPage() {
 
         <div className="h-fit xl:sticky xl:top-28">
           <OrderSummary totals={cart.totals} title="Your order">
+            <CouponForm coupon={cart.coupon} className="mt-6 border-t border-border pt-6" />
             <ul className="mt-6 divide-y divide-border border-t border-border pt-6">
               {cart.lines.map((line) => (
                 <CartLineItem key={line.id} line={line} readOnly className="!py-4" />

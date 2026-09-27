@@ -5,16 +5,24 @@ export const faqs = [
     group: 'Orders & Delivery',
     items: [
       {
-        q: 'How long will my order take to arrive?',
-        a: 'Standard delivery arrives in 3–5 working days and is free on orders over $150. Express delivery arrives next working day when ordered before 2pm. International orders take 7–12 working days depending on destination and customs clearance.',
+        q: 'Where do you deliver?',
+        a: 'We deliver across India. Orders are for delivery addresses in India only.',
+      },
+      {
+        q: 'How much does delivery cost?',
+        a: 'The delivery charge for your order — and whether it ships free — is shown in your cart and at checkout before you pay.',
+      },
+      {
+        q: 'How can I pay?',
+        a: 'Pay online (UPI, cards, net banking and wallets, secured by Razorpay) or choose Cash on Delivery where it is available.',
+      },
+      {
+        q: 'How do I track my order?',
+        a: 'Once your order is shipped, the courier name and tracking number appear on your order page.',
       },
       {
         q: 'Can I change my delivery address after ordering?',
-        a: 'Yes, provided the order has not entered fulfilment. Contact us within two hours of placing the order and we will update it. Once a parcel has a tracking number the address is locked by the carrier.',
-      },
-      {
-        q: 'Do you ship internationally?',
-        a: 'We ship to 42 countries. Duties and import taxes are calculated and collected at checkout for most destinations, so nothing is owed on delivery.',
+        a: 'Email us at knocknationbag@gmail.com with your order number as soon as possible, before the order is shipped.',
       },
     ],
   },
@@ -22,90 +30,89 @@ export const faqs = [
     group: 'Returns & Warranty',
     items: [
       {
-        q: 'What is your returns window?',
-        a: 'Thirty days from delivery, for any reason, provided the piece is unused and carries its tags. Return shipping is free within the United States and a flat $12 elsewhere.',
+        q: 'Can I return an order?',
+        a: 'Yes, if you are not satisfied with the product. Click Return Order on your order page within 7 days of receipt. The product must be unused, in the same condition as received, in its original packaging and accompanied by the invoice. Returns are for domestic orders only.',
       },
       {
-        q: 'What does the three-year warranty cover?',
-        a: 'Every manufacturing defect: stitching, hardware, zips, linings and structural failure. It does not cover ordinary wear, accidental damage or the natural patina leather develops. Repairs are free within the warranty period.',
+        q: 'Do I pay for return shipping?',
+        a: 'No. For domestic orders our courier partner collects the product from your address. Please do not ship the product before you receive confirmation from our team.',
       },
       {
-        q: 'Can I have a bag repaired after the warranty ends?',
-        a: 'Yes. Our workshop repairs any Knock Nation Bag piece for life at cost. Send us photographs and we will quote before starting work.',
+        q: 'When will I receive my refund?',
+        a: 'Refunds are processed after the returned product reaches our warehouse and passes inspection. Online payments are refunded through the same payment method where supported, within 10–15 working days from receipt of the returned product at the warehouse.',
+      },
+      {
+        q: 'Can I exchange or replace a product?',
+        a: 'Exchanges and replacements are not available.',
+      },
+      {
+        q: 'What warranty do your products have?',
+        a: 'Every product has different warranty rules depending on the category and specifications.',
       },
     ],
   },
   {
-    group: 'Products & Care',
+    group: 'Products & Orders',
     items: [
       {
-        q: 'How should I care for vegetable-tanned leather?',
-        a: 'Keep it dry, let it develop a patina, and condition it two or three times a year with a neutral cream. Avoid silicone-based products, which seal the surface and prevent the leather ageing properly.',
+        q: 'What kinds of bags do you make?',
+        a: 'We manufacture all types of bags in our own workshop: school bags, college bags and backpacks, laptop bags, and customized bags with your logo, colours, and design.',
       },
       {
-        q: 'Are your bags waterproof?',
-        a: 'Our coated canvas and ballistic nylon pieces are water-resistant and will handle sustained rain. Leather pieces are treated but not waterproof — wipe them dry and let them air rather than using direct heat.',
+        q: 'Can I order customized bags with my logo?',
+        a: 'Yes — your logo, your colours, your design. From a single piece to bulk orders, every bag goes through careful stitching and quality checks before it leaves our workshop. Contact us for our latest catalogue and rates.',
       },
       {
-        q: 'Do you offer monogramming?',
-        a: 'Blind debossing in up to three characters is available on all full-grain leather pieces at no cost. Add it in the cart. Monogrammed pieces can still be returned within the standard window.',
+        q: 'Do you take wholesale and bulk orders?',
+        a: 'Yes. Bulk orders and single pieces are both welcome. We supply schools, colleges, companies, shops and resellers all over India.',
       },
     ],
   },
 ]
 
-export const aboutStats = [
-  { value: '2019', label: 'Founded in Lisbon' },
-  { value: '42', label: 'Countries served' },
-  { value: '21', label: 'Point quality check' },
-  { value: '3 yr', label: 'Warranty as standard' },
-]
-
-export const aboutValues = [
-  {
-    title: 'Structure first',
-    body: 'A bag is an architectural problem before it is a fashion one. We design the frame, the load path and the opening geometry before we choose a hide.',
+/** About page — the client's own words. Do not rewrite the facts. */
+export const about = {
+  story: {
+    heading: 'Our Story',
+    paragraphs: [
+      "Knock Nation's story began in 2002, when Mr. Noor Alam Shaikh, born in Bihar, India, opened a small bag shop in Byculla, Mumbai, with one simple goal: to make strong, good-quality bags at fair prices.",
+      'More than two decades later, we are still running from the same place where it all started. That first shop grew into KN and Antic Bags, the company behind our brand KNOCK NATION, and the idea behind it has never changed: every bag should be made to last.',
+    ],
   },
-  {
-    title: 'Materials that age',
-    body: 'We choose vegetable-tanned leather, waxed canvas and solid brass because they improve with use. Materials that only ever look worse are not on our bench.',
+  make: {
+    heading: 'What We Make',
+    intro: 'We manufacture all types of bags in our own workshop:',
+    items: [
+      { id: 'school', title: 'School Bags' },
+      { id: 'college', title: 'College Bags & Backpacks' },
+      { id: 'laptop', title: 'Laptop Bags' },
+      { id: 'custom', title: 'Customized Bags', body: 'with your logo, colours, and design' },
+    ],
+    outro: 'From a single piece to bulk orders, every bag goes through careful stitching and quality checks before it leaves our workshop.',
   },
-  {
-    title: 'Repair over replace',
-    body: 'Every piece is repairable for life at cost. A bag that comes back to the workshop twice in twenty years is a success, not a failure.',
+  supply: {
+    heading: 'Supplying All Over India',
+    body: 'From our home in Byculla, Mumbai, we supply bags to schools, colleges, companies, shops, and resellers all over India. Whether you run a store, need bags for your institution, or want branded bags for your company, we deliver to your city.',
   },
-]
-
-/**
- * Founder section on the About page.
- * Placeholder identity — swap `name` and `portrait` for the real founder.
- * Copy is written pronoun-free so it stays accurate whoever it is replaced with.
- */
-export const founder = {
-  eyebrow: 'OUR FOUNDER',
-  heading: 'Building Confidence Through Every Journey',
-  subheading:
-    'A bag should earn its place on your shoulder for a decade, not a season. That conviction is where Knock Nation Bag started, and it still settles every decision we make.',
-  name: 'Rafael Duarte',
-  role: 'Founder & Creative Director',
-  portrait: '/images/about/founder-portrait.webp',
-  portraitAlt:
-    'Rafael Duarte, Founder and Creative Director of Knock Nation Bag, photographed against a neutral studio backdrop',
-  quote:
-    'We are not trying to make a bag you love on the day it arrives. We are making the one you still reach for in ten years.',
-  story: [
-    'The brand began in 2019 with a repaired bag rather than a new one. A twelve-year-old leather holdall, split at the seam, that three shops declined to touch because replacing it was cheaper than mending it. That answer felt like the wrong one — and it turned out to be the whole brief.',
-    'So we started at the frame. Before a hide is chosen or a colourway approved, we settle the structure: where the load travels, how the opening behaves when the bag is half empty, which four points will take the abuse. Design that begins with the silhouette can only ever hide its weaknesses. Design that begins with the structure does not have any to hide.',
-    'That standard is easier to promise than to keep, so we made it measurable. Every piece leaves the Lisbon workshop through the same twenty-one-point check, and every piece carries a three-year warranty against anything we got wrong. After that we repair it for life at cost, because the alternative is asking someone to throw away something we told them would last.',
-    'The people who buy from us tend to buy once and then write to us years later — about a strap that needs replacing, or a trip the bag survived. Those letters shape the next season far more than any trend report. We would rather be told what failed than be flattered.',
-    'What comes next is more of the same discipline, applied wider: fewer pieces, released when they are finished rather than when the calendar says so, and a repair service that reaches every one of the forty-two countries we ship to. Growth is welcome. It is simply not the point.',
-  ],
+  why: {
+    heading: 'Why Choose Knock Nation',
+    items: [
+      { id: 'since', title: 'Since 2002', body: 'More than 20 years of bag-making experience' },
+      { id: 'direct', title: 'Direct from the manufacturer', body: 'No middlemen, better rates' },
+      { id: 'custom', title: 'Custom orders', body: 'Your logo, your colours, your design' },
+      { id: 'wholesale', title: 'Wholesale & retail', body: 'Bulk orders and single pieces, both welcome' },
+      { id: 'india', title: 'Pan-India supply', body: 'Delivery across the country' },
+    ],
+  },
+  together: {
+    heading: "Let's Work Together",
+    body: 'Whether you need one bag or a thousand, we would love to make it for you. Contact us on WhatsApp for our latest catalogue and rates.',
+    tagline: 'KNOCK NATION: Quality Bags Since 2002.',
+  },
 }
 
 export const contactChannels = [
-  { label: 'Customer care', value: 'care@knocknationbag.com', href: 'mailto:care@knocknationbag.com' },
-  { label: 'Press & partnerships', value: 'press@knocknationbag.com', href: 'mailto:press@knocknationbag.com' },
-  { label: 'Telephone', value: '+1 (555) 018 4420', href: 'tel:+15550184420' },
+  { label: 'Email', value: 'knocknationbag@gmail.com', href: 'mailto:knocknationbag@gmail.com' },
 ]
 
 /**
@@ -115,136 +122,122 @@ export const contactChannels = [
 export const policies = {
   shipping: {
     title: 'Shipping Policy',
-    updated: 'January 2025',
-    intro:
-      'How and when we despatch orders, what it costs, and what happens if something goes wrong in transit.',
+    updated: 'September 2026',
+    intro: 'Where we deliver, what delivery costs, and how to follow your order.',
     sections: [
       {
-        heading: 'Despatch times',
+        heading: 'Where we deliver',
         body: [
-          'Orders placed before 2pm on a working day are despatched the same day. Orders placed after that, or at a weekend or public holiday, are despatched the next working day.',
-          'Monogrammed pieces add one working day to despatch because the debossing is done by hand in the workshop.',
+          'We deliver to addresses across India. We do not ship outside India.',
         ],
       },
       {
-        heading: 'Delivery options and cost',
+        heading: 'Delivery charges',
         body: [
-          'Standard delivery: 3–5 working days. Free on orders over $150, otherwise $8.',
-          'Express delivery: next working day when ordered before 2pm. $18.',
-          'International delivery: 7–12 working days. Calculated at checkout by destination.',
+          'The delivery charge for your order, and whether your order qualifies for free delivery, is shown in your cart and at checkout before you pay.',
         ],
       },
       {
-        heading: 'Duties and import taxes',
+        heading: 'Payment',
         body: [
-          'For most destinations we collect duties and import taxes at checkout, so nothing further is owed on delivery. Where we cannot collect in advance, this is stated clearly before payment.',
+          'Pay online (UPI, cards, net banking and wallets, secured by Razorpay) or choose Cash on Delivery where it is available. For Cash on Delivery, please keep the order amount ready for the courier.',
         ],
       },
       {
-        heading: 'Lost or damaged parcels',
+        heading: 'Tracking your order',
         body: [
-          'Every shipment is insured for its full value. If a parcel is lost or arrives damaged, contact us within 14 days of the expected delivery date and we will replace it or refund you in full. We handle the carrier claim ourselves.',
+          'Once your order is shipped, the courier name and tracking number appear on your order page. Signed-in customers also find every order under My Account.',
+        ],
+      },
+      {
+        heading: 'Damaged or defective products',
+        body: [
+          'Defects must be reported within 7 days of receipt. Use Return Order on your order page, as set out in our Return and Exchange Policy.',
         ],
       },
     ],
   },
   returns: {
-    title: 'Return Policy',
-    updated: 'January 2025',
-    intro: 'Thirty days, any reason, with free return shipping within the United States.',
+    title: 'Return and Exchange Policy',
+    updated: 'September 2026',
+    intro: 'Customers can return an order if they are not satisfied with the product.',
     sections: [
       {
-        heading: 'The window',
+        heading: 'Return conditions',
         body: [
-          'You have 30 days from the date of delivery to start a return. The piece must be unused and carry its original tags. Original packaging is appreciated but not required.',
+          'Defective products must be unused, in the same condition as received, in original packaging, and accompanied by the invoice.',
+          'Defects must be reported within 7 days of receipt.',
+          'Returns are available for domestic orders only.',
         ],
       },
       {
-        heading: 'How to return',
+        heading: 'Return shipping',
         body: [
-          'Start a return from your account, or email care@knocknationbag.com with your order number. We issue a prepaid label within one working day.',
-          'Return shipping is free within the United States. Elsewhere a flat $12 is deducted from the refund.',
+          'For domestic orders, our courier partner collects the product from your address. You do not pay return shipping charges.',
         ],
       },
       {
-        heading: 'What cannot be returned',
+        heading: 'Return process',
         body: [
-          'Monogrammed pieces can be returned within the standard window, but gift cards and care products that have been opened cannot.',
+          '1. Click Return Order on your order page within 7 days from receipt.',
+          '2. Do not ship the product before you receive confirmation from our team.',
+          '3. The product must be unused and unaltered.',
+          '4. Include the original packaging, tags and invoice.',
+          '5. Requests after 7 days cannot be accepted.',
         ],
       },
       {
-        heading: 'Exchanges',
+        heading: 'Refunds',
         body: [
-          'We do not process direct exchanges, because it delays you twice. Return the original for a refund and place a new order — the refund is issued as soon as the return is scanned by the carrier, not when it reaches us.',
+          'A refund is processed only after the returned product reaches our warehouse. The product is inspected there, and if it satisfies the return conditions, the refund is initiated.',
+          'Online payments are refunded through the same payment method where supported. Online refunds are processed within 10–15 working days from receipt of the returned product at the warehouse.',
         ],
+      },
+      {
+        heading: 'Exchanges and replacements',
+        body: ['Exchange and replacement are not available.'],
       },
     ],
   },
   refund: {
     title: 'Refund Policy',
-    updated: 'January 2025',
-    intro: 'When refunds are issued, how they are paid, and how long they take to appear.',
+    updated: 'September 2026',
+    intro: 'When refunds for returned products are processed, and how they are paid.',
     sections: [
       {
-        heading: 'Timing',
+        heading: 'When a refund is made',
         body: [
-          'Refunds are issued as soon as your return is scanned by the carrier, not when it arrives with us. Funds typically appear within 3–5 working days depending on your bank.',
+          'A refund is processed only after the returned product reaches our warehouse. The product is inspected, and if it satisfies the return conditions in our Return and Exchange Policy, the refund is initiated.',
         ],
       },
       {
-        heading: 'Method',
+        heading: 'How it is paid',
         body: [
-          'Refunds are returned to the original payment method. Where that method has expired or been cancelled, we issue store credit or arrange a bank transfer.',
+          'Online payments are refunded through the same payment method where supported. Online refunds are processed within 10–15 working days from receipt of the returned product at the warehouse.',
         ],
       },
       {
-        heading: 'Partial refunds',
-        body: [
-          'If a returned piece shows use beyond reasonable inspection, we may issue a partial refund. We always contact you with photographs before doing so, and you may have the piece returned to you instead.',
-        ],
-      },
-      {
-        heading: 'Original shipping cost',
-        body: [
-          'Where shipping was paid, it is refunded in full if the return is due to a fault or an error on our part. For change-of-mind returns the original shipping charge is retained.',
-        ],
+        heading: 'Exchanges and replacements',
+        body: ['Exchange and replacement are not available.'],
       },
     ],
   },
   warranty: {
     title: 'Warranty',
-    updated: 'January 2025',
-    intro: 'Three years against manufacturing defects, and lifetime repair at cost thereafter.',
+    updated: 'September 2026',
+    intro: 'Every product has different warranty rules depending on the category and specifications.',
     sections: [
       {
-        heading: 'What is covered',
+        heading: 'Warranty on your product',
         body: [
-          'For three years from purchase we cover every manufacturing defect: stitching failure, hardware breakage, zip failure, lining separation and structural collapse. Repair or replacement is free, including shipping both ways.',
-        ],
-      },
-      {
-        heading: 'What is not covered',
-        body: [
-          'Ordinary wear, accidental damage, misuse, and the natural patina and softening that leather develops with use. Patina is the material working as intended, not a defect.',
-        ],
-      },
-      {
-        heading: 'After three years',
-        body: [
-          'Our workshop repairs any Knock Nation Bag piece for life at cost — you pay materials and postage, not labour. Send photographs to care@knocknationbag.com and we will quote before starting.',
-        ],
-      },
-      {
-        heading: 'Making a claim',
-        body: [
-          'Email us with your order number and photographs of the issue. We assess within two working days and send a prepaid label if the claim is accepted.',
+          'Every product has different warranty rules depending on the category and specifications. Contact us with your order number to confirm the rules for your product.',
         ],
       },
     ],
   },
   privacy: {
     title: 'Privacy Policy',
-    updated: 'January 2025',
+    updated: 'September 2026',
     intro: 'What we collect, why we collect it, and the control you have over it.',
     sections: [
       {
@@ -257,57 +250,72 @@ export const policies = {
       {
         heading: 'Why we collect it',
         body: [
-          'To fulfil and deliver orders, to handle returns and warranty claims, to prevent fraud, and — only where you have opted in — to send marketing email.',
-          'We do not sell personal data, and we do not share it with third parties except the processors required to run the shop: payment, delivery and email providers.',
+          'To fulfil and deliver orders, to handle returns and refunds, and to prevent fraud.',
+          'We do not sell personal data, and we do not share it with third parties except the processors required to run the shop: payment (Razorpay), delivery and email providers.',
         ],
       },
       {
         heading: 'Cookies',
         body: [
-          'Essential cookies keep your cart and session working and cannot be switched off. Analytics and marketing cookies are optional and off until you accept them.',
+          'Essential cookies keep your cart and sign-in working.',
         ],
       },
       {
         heading: 'Your rights',
         body: [
-          'You may request a copy of your data, ask us to correct or delete it, or withdraw consent to marketing at any time. Email care@knocknationbag.com and we respond within 30 days.',
+          'You may request a copy of your data, or ask us to correct or delete it. Email knocknationbag@gmail.com.',
         ],
       },
     ],
   },
   terms: {
     title: 'Terms & Conditions',
-    updated: 'January 2025',
-    intro: 'The terms on which we sell to you.',
+    updated: 'September 2026',
+    intro: 'The terms on which we sell to you through this website.',
     sections: [
       {
-        heading: 'Forming a contract',
+        heading: 'Orders',
         body: [
-          'Your order is an offer to buy. A contract is formed when we send the despatch confirmation email, not when payment is taken. If we cannot fulfil an order we refund you in full and explain why.',
+          'Placing an order is an offer to buy. For online payment, the order is confirmed once the payment is verified. For Cash on Delivery, payment is collected when the order is delivered.',
+          'If we cannot fulfil an order, we will contact you, and any online payment for it is refunded through the same payment method where supported.',
         ],
       },
       {
-        heading: 'Pricing and availability',
+        heading: 'Prices and availability',
         body: [
-          'Prices are shown in US dollars and include applicable taxes where stated. We correct pricing errors when we find them; if a price was clearly wrong we contact you before despatch and you may cancel.',
+          'Prices are in Indian rupees (₹). Where GST applies it is shown at checkout. Delivery charges and any coupon discount are shown before you pay.',
+          'Products are subject to availability. Stock is checked again when you place your order.',
         ],
       },
       {
-        heading: 'Acceptable use',
+        heading: 'Delivery',
         body: [
-          'You may not resell our products as new without written permission, scrape the site, or use our photography and copy without a licence.',
+          'We deliver to addresses in India only. See our Shipping Policy.',
         ],
       },
       {
-        heading: 'Liability',
+        heading: 'Coupons',
         body: [
-          'Nothing in these terms limits liability for death, personal injury or fraud. Otherwise our liability is limited to the value of the order concerned.',
+          'Coupons are subject to their own conditions — such as a minimum order amount, an expiry date and usage limits — which are checked when the coupon is applied and again when the order is placed.',
         ],
       },
       {
-        heading: 'Governing law',
+        heading: 'Returns, refunds and warranty',
         body: [
-          'These terms are governed by the laws of the State of New York, and disputes are subject to the exclusive jurisdiction of its courts.',
+          'Returns and refunds are handled under our Return and Exchange Policy. Exchange and replacement are not available.',
+          'Every product has different warranty rules depending on the category and specifications.',
+        ],
+      },
+      {
+        heading: 'Use of this website',
+        body: [
+          'You may not resell our products as new without written permission, scrape the site, or use our photography and copy without permission.',
+        ],
+      },
+      {
+        heading: 'Contact',
+        body: [
+          'Questions about these terms: email knocknationbag@gmail.com.',
         ],
       },
     ],

@@ -169,6 +169,34 @@ p {
 }
 
 /* ---------------------------------------------------------------------------
+   Print — order bill and shipping label.
+
+   Documented exception to "tokens and base styles only": paper size cannot be
+   expressed as a utility. Named pages scope each size to its own document —
+   an element with [page:label] prints on 3 × 5 in stock, [page:bill] on A4 —
+   so nothing about printing any other page of the site changes. The print
+   screens live in app/(print) and app/(admin)/admin/(print).
+--------------------------------------------------------------------------- */
+
+@page bill {
+  size: A4;
+  margin: 12mm;
+}
+
+@page label {
+  size: 3in 5in;
+  margin: 0;
+}
+
+@media print {
+  body {
+    background-color: var(--color-surface);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Reduced motion — accessibility.md §7. Safety net, not a substitute for
    writing motion-aware components.
 --------------------------------------------------------------------------- */

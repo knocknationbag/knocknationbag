@@ -7,7 +7,9 @@ import AdminCard from '@/components/admin/ui/AdminCard'
 import StatusBadge from '@/components/admin/ui/StatusBadge'
 import AuthMessage from '@/components/admin/auth/AuthMessage'
 import OrderStatusForm from '@/components/admin/orders/OrderStatusForm'
+import OrderDocumentsCard from '@/components/admin/orders/OrderDocumentsCard'
 import { getOrder } from '@/lib/db/orders'
+import { listReturnsForOrder } from '@/lib/db/returns'
 import { formatAddress } from '@/lib/checkout/validation'
 import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '@/constants/orders'
 import { formatPrice } from '@/utils/formatPrice'
@@ -49,6 +51,7 @@ export default async function AdminOrderPage({ params }) {
   }
   if (!order) notFound()
 
+  const returns = await listReturnsForOrder(order.id)
   const t = order.totals
 
   return (
@@ -95,7 +98,9 @@ export default async function AdminOrderPage({ params }) {
             </ul>
             <dl className="border-t border-border px-4 py-3">
               <Row label="Subtotal" value={formatPrice(t.subtotal)} />
+              {t.discount > 0 ? <Row label={`Coupon ${t.couponCode ?? ''}`} value={`−${formatPrice(t.discount)}`} /> : null}
               <Row label="Shipping" value={t.shippingFee ? formatPrice(t.shippingFee) : 'Free'} />
+              {t.shippingDiscount > 0 ? <Row label={`Shipping waived${t.couponCode ? ` (${t.couponCode})` : ''}`} value={`−${formatPrice(t.shippingDiscount)}`} /> : null}
               {t.gstRate ? <Row label={`GST ${t.gstRate}%${t.pricesIncludeGst ? ' (included)' : ''}`} value={formatPrice(t.gstAmount)} /> : null}
               <Row label="Total" value={formatPrice(t.total)} strong />
             </dl>
@@ -115,6 +120,7 @@ export default async function AdminOrderPage({ params }) {
 
         <div className="flex flex-col gap-4">
           <OrderStatusForm order={order} />
+          <OrderDocumentsCard order={order} returns={returns} />
 
           <AdminCard title="Customer">
             <dl>

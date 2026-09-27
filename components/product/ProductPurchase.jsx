@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import QuantityStepper from '@/components/ui/QuantityStepper'
 import PriceTag from './PriceTag'
 import { useCart } from '@/components/cart/CartProvider'
+import { useVariantSelection } from './VariantSelection'
 import { addToCart } from '@/lib/cart/actions'
 import { cn } from '@/utils/cn'
 
@@ -15,14 +16,18 @@ import { cn } from '@/utils/cn'
  * Price, option choice, availability and quantity for the product page.
  *
  * A product with variants makes the customer choose one before buying; price
- * and stock then follow the chosen variant. The first in-stock variant is
- * preselected so the page never opens on a sold-out option.
+ * and stock then follow the chosen variant — and the gallery switches to its
+ * photos. The first in-stock variant is preselected so the page never opens
+ * on a sold-out option.
  */
 export default function ProductPurchase({ product }) {
   const { variants } = product
-  const [variantId, setVariantId] = useState(
-    () => (variants.find((v) => v.inStock) ?? variants[0])?.id ?? null,
-  )
+  // Shared with the gallery when the page provides it, so choosing a colour
+  // shows that colour's photos; local state otherwise.
+  const selection = useVariantSelection()
+  const [localId, setLocalId] = useState(() => (variants.find((v) => v.inStock) ?? variants[0])?.id ?? null)
+  const variantId = selection ? selection.variantId : localId
+  const setVariantId = selection ? selection.setVariantId : setLocalId
   const [quantity, setQuantity] = useState(1)
   const [feedback, setFeedback] = useState(null)
   const [pending, startTransition] = useTransition()

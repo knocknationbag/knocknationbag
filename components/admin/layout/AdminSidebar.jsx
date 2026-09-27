@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3, ChevronLeft, FileText, Folder, Gauge, Image as ImageIcon, Layers, LayoutGrid,
   ListOrdered, Mail, Newspaper, Package, PanelsTopLeft, Percent, ScrollText, Search,
-  Settings, Shapes, ShieldCheck, Star, Tags, Users, Warehouse, X,
+  Settings, Shapes, ShieldCheck, Star, Tags, Undo2, Users, Warehouse, X,
 } from 'lucide-react'
 
 import Logo from '@/components/common/Logo'
@@ -15,7 +15,7 @@ import { cn } from '@/utils/cn'
 
 const ICONS = {
   dashboard: Gauge, analytics: BarChart3, products: Package, categories: Shapes,
-  collections: Layers, brands: Tags, inventory: Warehouse, orders: ListOrdered,
+  collections: Layers, brands: Tags, inventory: Warehouse, orders: ListOrdered, returns: Undo2,
   customers: Users, reviews: Star, coupons: Percent, pages: FileText, blog: Newspaper,
   banners: PanelsTopLeft, media: ImageIcon, forms: Mail, seo: Search, redirects: Folder,
   users: Users, roles: ShieldCheck, logs: ScrollText, settings: Settings,

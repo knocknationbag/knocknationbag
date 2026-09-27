@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Container from '@/components/layout/Container'
 import PageHeader from '@/components/common/PageHeader'
 import { policies } from '@/data/content'
+import { store } from '@/constants/site'
 
 /**
  * Shared body for every policy page. Each policy gets its own explicit route
@@ -40,12 +41,12 @@ export default function PolicyPage({ slug }) {
           <p className="mt-12 border-t border-border pt-6 text-[15px] text-body">
             Questions about this policy? Email{' '}
             <a
-              href="mailto:care@knocknationbag.com"
+              href={`mailto:${store.email}`}
               className="font-semibold text-ink underline underline-offset-4 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
             >
-              care@knocknationbag.com
-            </a>{' '}
-            and we will answer within one working day.
+              {store.email}
+            </a>
+            {' '}— care hours {store.careHours.days}, {store.careHours.hours}.
           </p>
         </div>
       </Container>

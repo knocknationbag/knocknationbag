@@ -32,8 +32,13 @@ export default function OrderSummary({ totals, title = 'Order summary', ctaLabel
 
       <dl className="mt-6 flex flex-col gap-3">
         <SummaryRow label={`Subtotal (${totals.itemCount} item${totals.itemCount === 1 ? '' : 's'})`} value={formatPrice(totals.subtotal)} />
-        {totals.discount > 0 ? <SummaryRow label="Discount" value={`−${formatPrice(totals.discount)}`} tone="text-verified-fg" /> : null}
-        <SummaryRow label="Shipping" value={totals.shippingFee === 0 ? 'Free' : formatPrice(totals.shippingFee)} />
+        {totals.discount > 0 ? (
+          <SummaryRow label={totals.couponCode ? `Coupon ${totals.couponCode}` : 'Discount'} value={`−${formatPrice(totals.discount)}`} tone="text-verified-fg" />
+        ) : null}
+        <SummaryRow
+          label={totals.shippingDiscount > 0 ? `Shipping (${formatPrice(totals.shippingDiscount)} waived${totals.couponCode ? ` · ${totals.couponCode}` : ''})` : 'Shipping'}
+          value={totals.shippingFee === 0 ? 'Free' : formatPrice(totals.shippingFee)}
+        />
         {gstLabel ? <SummaryRow label={gstLabel} value={formatPrice(totals.gstAmount)} /> : null}
         <div className="mt-3 border-t border-border pt-4">
           <SummaryRow label="Total" value={formatPrice(totals.total)} strong />

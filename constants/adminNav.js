@@ -29,6 +29,7 @@ const ALL_NAV = [
     group: 'Sales',
     items: [
       { label: 'Orders', href: '/admin/orders', icon: 'orders' },
+      { label: 'Returns', href: '/admin/returns', icon: 'returns' },
       { label: 'Customers', href: '/admin/customers', icon: 'customers' },
       { label: 'Reviews', href: '/admin/reviews', icon: 'reviews' },
       { label: 'Coupons', href: '/admin/coupons', icon: 'coupons' },
@@ -72,7 +73,9 @@ export const ENABLED_MODULES = [
   '/admin/categories',
   '/admin/inventory',
   '/admin/orders',
+  '/admin/returns',
   '/admin/customers',
+  '/admin/coupons',
   '/admin/settings',
 ]
 
