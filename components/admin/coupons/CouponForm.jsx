@@ -24,6 +24,7 @@ export default function CouponForm({ coupon = null, expiresOn = '', aside = null
   const [state, formAction, pending] = useActionState(saveCoupon, INITIAL)
   const [type, setType] = useState(coupon?.type ?? 'percentage')
   const [active, setActive] = useState(coupon?.isActive ?? true)
+  const [isPublic, setIsPublic] = useState(coupon?.isPublic ?? false)
   const errors = state.fieldErrors ?? {}
   const locked = Boolean(coupon?.archivedAt)
 
@@ -35,6 +36,7 @@ export default function CouponForm({ coupon = null, expiresOn = '', aside = null
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="id" value={coupon?.id ?? ''} />
       {active ? <input type="hidden" name="isActive" value="on" /> : null}
+      {isPublic ? <input type="hidden" name="isPublic" value="on" /> : null}
 
       {state.error ? <AuthMessage tone="error">{state.error}</AuthMessage> : null}
       {state.ok && !state.created ? <AuthMessage tone="success">Coupon saved.</AuthMessage> : null}
@@ -94,6 +96,10 @@ export default function CouponForm({ coupon = null, expiresOn = '', aside = null
           <AdminCard title="Status">
             <AdminToggle id="coupon-active" label="Active" checked={active} onChange={locked ? undefined : setActive}
               hint={active ? 'Customers can apply this code.' : 'Disabled: the code is refused at checkout.'} />
+            <AdminToggle id="coupon-public" className="mt-4" label="Show on website" checked={isPublic} onChange={locked ? undefined : setIsPublic}
+              hint={isPublic
+                ? 'Listed under "Available offers" in the cart and checkout while it is active, not expired and not used up.'
+                : 'Hidden: only customers who know the code can use it.'} />
           </AdminCard>
           {aside}
         </div>

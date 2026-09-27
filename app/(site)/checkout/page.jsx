@@ -5,8 +5,10 @@ import Breadcrumb from '@/components/common/Breadcrumb'
 import CartLineItem from '@/components/common/CartLineItem'
 import OrderSummary from '@/components/common/OrderSummary'
 import CouponForm from '@/components/cart/CouponForm'
+import AvailableOffers from '@/components/cart/AvailableOffers'
 import CheckoutForm from '@/components/checkout/CheckoutForm'
 import { loadCart } from '@/lib/cart'
+import { listPublicCoupons } from '@/lib/coupons/public'
 import { createClient } from '@/lib/supabase/server'
 import { isOnlinePaymentConfigured } from '@/lib/payments/razorpay'
 
@@ -24,7 +26,7 @@ export const dynamic = 'force-dynamic'
  * sold-out items, goes back to the cart to be fixed first.
  */
 export default async function CheckoutPage() {
-  const cart = await loadCart()
+  const [cart, offers] = await Promise.all([loadCart(), listPublicCoupons()])
   if (!cart.lines.length || !cart.canCheckout) redirect('/cart')
 
   const { userId } = cart.shopper
@@ -58,6 +60,7 @@ export default async function CheckoutPage() {
         <div className="h-fit xl:sticky xl:top-28">
           <OrderSummary totals={cart.totals} title="Your order">
             <CouponForm coupon={cart.coupon} className="mt-6 border-t border-border pt-6" />
+            <AvailableOffers offers={offers} appliedCode={cart.coupon?.ok ? cart.coupon.code : null} className="mt-5" />
             <ul className="mt-6 divide-y divide-border border-t border-border pt-6">
               {cart.lines.map((line) => (
                 <CartLineItem key={line.id} line={line} readOnly className="!py-4" />

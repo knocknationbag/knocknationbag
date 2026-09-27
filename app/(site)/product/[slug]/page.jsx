@@ -12,6 +12,7 @@ import Tabs from '@/components/ui/Tabs'
 import ProductGallery from '@/components/product/ProductGallery'
 import ProductGrid from '@/components/product/ProductGrid'
 import ProductPurchase from '@/components/product/ProductPurchase'
+import ProductShare from '@/components/product/ProductShare'
 import { VariantSelectionProvider } from '@/components/product/VariantSelection'
 import WholesaleOffer from '@/components/product/WholesaleOffer'
 import { getCatalog, getCategoryBySlug, getProductBySlug, getProductRedirect, getRelatedProducts } from '@/lib/catalog'
@@ -164,6 +165,8 @@ export default async function ProductPage({ params }) {
                 </li>
               ))}
             </ul>
+
+            <ProductShare name={product.title} slug={product.slug} className="mt-6 border-t border-border pt-6" />
           </div>
         </div>
         </VariantSelectionProvider>

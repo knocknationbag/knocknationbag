@@ -7,10 +7,12 @@ import SectionHeader from '@/components/common/SectionHeader'
 import CartLineItem from '@/components/common/CartLineItem'
 import OrderSummary from '@/components/common/OrderSummary'
 import CouponForm from '@/components/cart/CouponForm'
+import AvailableOffers from '@/components/cart/AvailableOffers'
 import EmptyState from '@/components/ui/EmptyState'
 import AuthNotice from '@/components/auth/AuthNotice'
 import ProductGrid from '@/components/product/ProductGrid'
 import { loadCart } from '@/lib/cart'
+import { listPublicCoupons } from '@/lib/coupons/public'
 import { getCatalog } from '@/lib/catalog'
 import { sortProducts } from '@/utils/catalog'
 
@@ -24,7 +26,7 @@ export const metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function CartPage() {
-  const [cart, { products }] = await Promise.all([loadCart(), getCatalog()])
+  const [cart, { products }, offers] = await Promise.all([loadCart(), getCatalog(), listPublicCoupons()])
   const inCart = new Set(cart.lines.map((line) => line.productId))
   const recommended = sortProducts(products.filter((p) => p.inStock && !inCart.has(p.id)), 'featured').slice(0, 4)
   const hasProblem = cart.lines.some((line) => line.problem)
@@ -70,6 +72,7 @@ export default async function CartPage() {
               className="h-fit"
             >
               <CouponForm coupon={cart.coupon} className="mt-6 border-t border-border pt-6" />
+              <AvailableOffers offers={offers} appliedCode={cart.coupon?.ok ? cart.coupon.code : null} className="mt-5" />
               {hasProblem ? (
                 <p role="alert" className="mt-4 text-[14px] font-semibold text-danger">
                   Please fix the highlighted items before checking out.

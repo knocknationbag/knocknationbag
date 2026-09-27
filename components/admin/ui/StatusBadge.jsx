@@ -51,6 +51,8 @@ export const STATUS_TONE = {
   Index: 'success',
   // Coupons
   Disabled: 'muted',
+  Shown: 'success',
+  'Not shown': 'warning',
   Expired: 'danger',
   // Returns and refunds
   Requested: 'warning',

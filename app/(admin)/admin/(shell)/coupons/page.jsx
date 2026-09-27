@@ -49,6 +49,8 @@ export default async function AdminCouponsPage({ searchParams }) {
           uses: `${c.used}${c.usageLimit ? ` / ${c.usageLimit}` : ''}${c.held ? ` (+${c.held} held)` : ''}`,
           expires: c.expiresAt ? formatIndiaDate(c.expiresAt) : 'No expiry',
           status: c.state,
+          // Mirrors public_coupons(): public + active + unexpired + not used up.
+          website: !c.isPublic ? 'Hidden' : c.state === 'Active' && !(c.usageLimit && c.used + c.held >= c.usageLimit) ? 'Shown' : 'Not shown',
         }))}
         total={total}
         page={page}
@@ -69,6 +71,7 @@ export default async function AdminCouponsPage({ searchParams }) {
           { key: 'uses', header: 'Uses' },
           { key: 'expires', header: 'Expires' },
           { key: 'status', header: 'Status', type: 'status' },
+          { key: 'website', header: 'Website', type: 'status' },
           { key: 'actions', header: '', type: 'actions', align: 'right', label: 'coupon', editHrefBase: '/admin/coupons', linkKey: 'id' },
         ]}
       />
