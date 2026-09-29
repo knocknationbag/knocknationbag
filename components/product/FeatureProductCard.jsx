@@ -62,6 +62,7 @@ export default function FeatureProductCard({
         <h3 className="text-[18px] font-bold leading-tight text-white xl:text-[20px]">
           <Link
             href={`/product/${slug}`}
+            prefetch={false}
             className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
           >
             {title}

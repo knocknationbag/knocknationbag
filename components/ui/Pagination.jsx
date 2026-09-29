@@ -24,7 +24,7 @@ export default function Pagination({ page, totalPages, buildHref, className }) {
   return (
     <nav aria-label="Pagination" className={cn('flex items-center justify-center gap-2', className)}>
       {page > 1 ? (
-        <Link href={buildHref(page - 1)} rel="prev" aria-label="Previous page" className={cn(linkBase, 'border border-border text-ink hover:border-border-hover')}>
+        <Link href={buildHref(page - 1)} prefetch={false} rel="prev" aria-label="Previous page" className={cn(linkBase, 'border border-border text-ink hover:border-border-hover')}>
           <ChevronLeft size={18} aria-hidden="true" />
         </Link>
       ) : (
@@ -40,6 +40,7 @@ export default function Pagination({ page, totalPages, buildHref, className }) {
             {gap ? <span className="px-1 text-muted">…</span> : null}
             <Link
               href={buildHref(n)}
+              prefetch={false}
               aria-label={`Page ${n}`}
               aria-current={n === page ? 'page' : undefined}
               className={cn(
@@ -56,7 +57,7 @@ export default function Pagination({ page, totalPages, buildHref, className }) {
       })}
 
       {page < totalPages ? (
-        <Link href={buildHref(page + 1)} rel="next" aria-label="Next page" className={cn(linkBase, 'border border-border text-ink hover:border-border-hover')}>
+        <Link href={buildHref(page + 1)} prefetch={false} rel="next" aria-label="Next page" className={cn(linkBase, 'border border-border text-ink hover:border-border-hover')}>
           <ChevronRight size={18} aria-hidden="true" />
         </Link>
       ) : (

@@ -29,6 +29,8 @@ export default function SortDropdown({ params = {}, basePath, className }) {
           <li key={option.id}>
             <Link
               href={`${basePath}${buildQuery(params, { sort: option.id === 'featured' ? undefined : option.id, page: undefined })}`}
+              prefetch={false}
+              rel="nofollow"
               scroll={false}
               aria-current={option.id === current.id ? 'true' : undefined}
               className={cn(

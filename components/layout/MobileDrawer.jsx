@@ -115,6 +115,7 @@ export default function MobileDrawer({ open, onClose, items, actions, activeHref
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    prefetch={false}
                     onClick={onClose}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(

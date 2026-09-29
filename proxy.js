@@ -95,11 +95,40 @@ export async function proxy(request) {
 
 export const config = {
   /**
-   * Run on pages only. Static assets, the image optimiser and everything under
-   * public/ are excluded — without a matcher, Proxy runs on every request and
-   * would needlessly touch every CSS, JS and image file.
+   * Only the routes that read the session while rendering, or that the gates
+   * above protect. Everything else — home, product, shop, category,
+   * collections, search, content pages, APIs and assets — renders without a
+   * session, so running Proxy there (and for every <Link> prefetch of those
+   * pages) was a Vercel Function invocation with nothing to do.
+   *
+   * Why these, and why prefetches of them still run Proxy:
+   *   - Server Components on these routes read the session (admin shell,
+   *     account, cart, checkout, order pages, reset-password). A Server
+   *     Component cannot write cookies, so the token must be refreshed here,
+   *     before rendering — including for prefetches, or a prefetch could spend
+   *     a refresh token without saving the new one.
+   *   - /login, /register, /forgot-password and /admin/(auth) redirect a
+   *     signed-in visitor away; a prefetch that skipped that would cache the
+   *     wrong page for the click.
+   *   - /auth/* are the sign-in callbacks and the header's /auth/session check,
+   *     which keeps a signed-in visitor's session fresh on public pages.
+   *
+   * Server Actions posted from public pages (add to cart, cart count,
+   * wholesale price, sign-out) refresh the session themselves: Actions can
+   * write cookies (lib/supabase/server.js).
+   *
+   * `:path*` matches the bare path too (/admin, /account).
    */
   matcher: [
-    '/((?!_next/static|_next/image|images/|icons/|logo/|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)',
+    '/admin/:path*',
+    '/account/:path*',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/auth/:path*',
+    '/cart',
+    '/checkout',
+    '/order/:path*',
   ],
 }

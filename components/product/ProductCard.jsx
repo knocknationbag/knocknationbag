@@ -81,6 +81,7 @@ export default function ProductCard({
       <h3 className="mt-2.5 font-bold text-ink text-card-title-compact md:mt-3 md:text-card-title-md xl:mt-4 xl:text-card-title-xl">
         <Link
           href={`/product/${slug}`}
+          prefetch={false}
           className="after:absolute after:inset-0 after:z-10 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
         >
           {title}

@@ -26,6 +26,8 @@ function FacetGroup({ heading, options, param, active, params, basePath }) {
             <li key={value}>
               <Link
                 href={`${basePath}${buildQuery(params, { [param]: next, page: undefined })}`}
+                prefetch={false}
+                rel="nofollow"
                 scroll={false}
                 aria-pressed={isOn}
                 className="group flex items-center gap-3 text-[15px] text-body transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
@@ -63,6 +65,7 @@ export default function FilterSidebar({ facets, params = {}, basePath, className
         {hasFilters ? (
           <Link
             href={basePath}
+            prefetch={false}
             className="text-[14px] font-semibold text-gold underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
           >
             Clear all
@@ -79,6 +82,8 @@ export default function FilterSidebar({ facets, params = {}, basePath, className
         <h3 className="font-mono text-eyebrow uppercase text-gold">Availability</h3>
         <Link
           href={`${basePath}${buildQuery(params, { stock: params.stock === 'in' ? undefined : 'in', page: undefined })}`}
+          prefetch={false}
+          rel="nofollow"
           scroll={false}
           aria-pressed={params.stock === 'in'}
           className="group mt-4 flex items-center gap-3 text-[15px] text-body transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"

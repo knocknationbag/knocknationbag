@@ -28,7 +28,7 @@ export default function QuickAddButton({ productId, slug, title, hasVariants = f
 
   if (hasVariants) {
     return (
-      <Button variant="dark" size="sm" href={`/product/${slug}`} aria-label={`Choose options for ${title}`} className={className}>
+      <Button variant="dark" size="sm" href={`/product/${slug}`} prefetch={false} aria-label={`Choose options for ${title}`} className={className}>
         Choose
       </Button>
     )

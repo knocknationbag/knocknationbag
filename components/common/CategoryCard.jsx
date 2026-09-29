@@ -19,6 +19,7 @@ export default function CategoryCard({ image, imageAlt, title, slug, className }
   return (
     <Link
       href={`/category/${slug}`}
+      prefetch={false}
       className={cn(
         'group flex flex-col items-center gap-2 rounded-lg',
         'md:relative md:block md:aspect-[11/8] md:gap-0 md:overflow-hidden md:rounded-card',

@@ -21,6 +21,7 @@ export default function MegaMenu({ menu, onNavigate }) {
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    prefetch={false}
                     onClick={onNavigate}
                     className="text-[15px] text-body transition-colors hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                   >
@@ -34,6 +35,7 @@ export default function MegaMenu({ menu, onNavigate }) {
 
         <Link
           href={menu.feature.href}
+          prefetch={false}
           onClick={onNavigate}
           className="group relative block h-[200px] overflow-hidden rounded-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
         >

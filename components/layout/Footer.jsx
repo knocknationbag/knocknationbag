@@ -39,6 +39,7 @@ export default function Footer() {
                   <li key={link.href} className="leading-[28px]">
                     <Link
                       href={link.href}
+                      prefetch={false}
                       className="text-footer-link text-muted transition-colors duration-150 ease-out hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                     >
                       {link.label}
